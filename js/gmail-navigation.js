@@ -65,22 +65,28 @@ class GmailNavigation {
   }
   
   // Search emails by date
-  searchByDate(date) {
+  searchByDate(date, mode = 'single') {
     const dateStr = this.formatDateForSearch(date);
-    const searchBox = document.querySelector('input[aria-label*="Search"]');
+    let searchQuery;
     
-    if (searchBox) {
-      searchBox.value = `after:${dateStr} before:${this.getNextDay(dateStr)}`;
-      searchBox.focus();
-      
-      // Trigger search
-      const searchForm = searchBox.closest('form');
-      if (searchForm) {
-        searchForm.submit();
-      } else {
-        searchBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-      }
+    if (mode === 'single') {
+      // Single day search
+      searchQuery = `after:${dateStr} before:${this.getNextDay(dateStr)}`;
+    } else if (mode === 'after') {
+      // From date onwards
+      searchQuery = `after:${dateStr}`;
+    } else if (mode === 'before') {
+      // Before date
+      searchQuery = `before:${dateStr}`;
     }
+    
+    // Use Gmail's advanced search URL format
+    const baseUrl = window.location.origin + window.location.pathname;
+    const encodedQuery = encodeURIComponent(searchQuery);
+    const advancedSearchUrl = `${baseUrl}?q=${encodedQuery}#search/${encodedQuery}`;
+    
+    // Navigate to search results
+    window.location.href = advancedSearchUrl;
   }
   
   // Format date for Gmail search (YYYY/MM/DD)
@@ -315,6 +321,11 @@ class GmailNavigation {
           <div class="ez-date-picker">
             <label>Select Date:</label>
             <input type="date" id="ez-date-input" />
+            <select id="ez-date-mode">
+              <option value="single">Emails on this date</option>
+              <option value="after">Emails from this date onwards</option>
+              <option value="before">Emails before this date</option>
+            </select>
             <button class="ez-nav-btn-primary" id="ez-date-search-btn">Search</button>
           </div>
         </div>
@@ -345,8 +356,9 @@ class GmailNavigation {
     // Custom date search
     document.getElementById('ez-date-search-btn').addEventListener('click', () => {
       const dateInput = document.getElementById('ez-date-input');
+      const modeSelect = document.getElementById('ez-date-mode');
       if (dateInput.value) {
-        this.searchByDate(dateInput.value);
+        this.searchByDate(dateInput.value, modeSelect.value);
         modal.remove();
       }
     });
@@ -381,14 +393,44 @@ class GmailNavigation {
   init() {
     // Find Gmail toolbar and insert navigation
     const toolbar = document.querySelector('[gh="mtb"]') || 
-                   document.querySelector('.aeH');
+                   document.querySelector('.aeH') ||
+                   document.querySelector('[role="banner"]');
     
-    if (toolbar && !document.getElementById('ez-gmail-navigation')) {
+    // Find Gmail main content area as fallback
+    const mainContent = document.querySelector('.AO') || 
+                       document.querySelector('[role="main"]') ||
+                       document.querySelector('.nH.bkL');
+    
+    const insertTarget = toolbar || mainContent;
+    
+    if (insertTarget && !document.getElementById('ez-gmail-navigation')) {
       const nav = this.createNavigationBar();
-      toolbar.parentNode.insertBefore(nav, toolbar.nextSibling);
+      
+      // Insert after toolbar or at top of main content
+      if (toolbar) {
+        toolbar.parentNode.insertBefore(nav, toolbar.nextSibling);
+      } else if (mainContent) {
+        mainContent.insertBefore(nav, mainContent.firstChild);
+      }
+      
       this.setupEventListeners();
       this.updateNavigationBar();
+      
+      // Re-initialize on Gmail navigation changes
+      this.observeGmailChanges();
     }
+  }
+  
+  // Observe Gmail DOM changes to reinitialize if needed
+  observeGmailChanges() {
+    const observer = new MutationObserver(() => {
+      if (!document.getElementById('ez-gmail-navigation')) {
+        this.init();
+      }
+    });
+    
+    const target = document.querySelector('.nH.bkL') || document.body;
+    observer.observe(target, { childList: true, subtree: false });
   }
 }
 

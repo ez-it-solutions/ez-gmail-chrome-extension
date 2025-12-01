@@ -31,7 +31,12 @@ async function initializeExtension() {
 function waitForGmailLoad() {
   return new Promise((resolve) => {
     const checkInterval = setInterval(() => {
-      const toolbar = document.querySelector('[gh="mtb"]') || document.querySelector('.aeH');
+      // Check for various Gmail elements
+      const toolbar = document.querySelector('[gh="mtb"]') || 
+                     document.querySelector('.aeH') ||
+                     document.querySelector('[role="banner"]') ||
+                     document.querySelector('.nH.bkL'); // Gmail container
+      
       if (toolbar) {
         clearInterval(checkInterval);
         resolve();
