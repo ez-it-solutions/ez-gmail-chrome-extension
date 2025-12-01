@@ -24,9 +24,9 @@ async function initializeExtension() {
       gmailNavigation.init();
       console.log("Gmail navigation initialized");
       
-      // Set up multiple retry attempts with increasing delays
-      // Gmail often rebuilds the DOM, so we need to be persistent
-      const retryDelays = [1000, 2000, 3000, 5000];
+      // Set up retry attempts with increasing delays
+      // Reduced to prevent memory issues
+      const retryDelays = [2000, 5000];
       retryDelays.forEach(delay => {
         setTimeout(() => {
           if (!document.getElementById('ez-gmail-navigation')) {

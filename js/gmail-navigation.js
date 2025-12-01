@@ -8,6 +8,8 @@ class GmailNavigation {
     this.currentPage = this.getCurrentPage();
     this.totalPages = null;
     this.navigationBar = null;
+    this.observer = null; // Store observer reference to prevent multiple instances
+    this.reinitTimeout = null; // Store timeout reference for cleanup
   }
   
   // Get current page from URL
@@ -463,6 +465,20 @@ class GmailNavigation {
   
   // Initialize navigation
   init() {
+    // Prevent multiple simultaneous initializations
+    if (this.isInitializing) {
+      console.log('Ez Gmail: Already initializing, skipping...');
+      return;
+    }
+    
+    // Check if already exists
+    if (document.getElementById('ez-gmail-navigation')) {
+      console.log('Ez Gmail: Navigation bar already exists');
+      return;
+    }
+    
+    this.isInitializing = true;
+    
     // Find Gmail toolbar and insert navigation
     const toolbar = document.querySelector('[gh="mtb"]') || 
                    document.querySelector('.aeH') ||
@@ -475,7 +491,7 @@ class GmailNavigation {
     
     const insertTarget = toolbar || mainContent;
     
-    if (insertTarget && !document.getElementById('ez-gmail-navigation')) {
+    if (insertTarget) {
       const nav = this.createNavigationBar();
       
       if (!nav) {
@@ -515,44 +531,55 @@ class GmailNavigation {
       this.observeGmailChanges();
       
       console.log('Ez Gmail: Navigation bar initialized successfully');
+      this.isInitializing = false;
+    } else {
+      console.warn('Ez Gmail: Could not find insertion target');
+      this.isInitializing = false;
     }
   }
   
   // Observe Gmail DOM changes to reinitialize if needed
   observeGmailChanges() {
-    // Debounce reinit to avoid too many calls
-    let reinitTimeout = null;
+    // Disconnect existing observer to prevent duplicates
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
     
-    const observer = new MutationObserver(() => {
+    // Clear any pending reinit timeout
+    if (this.reinitTimeout) {
+      clearTimeout(this.reinitTimeout);
+      this.reinitTimeout = null;
+    }
+    
+    // Create new observer
+    this.observer = new MutationObserver(() => {
       if (!document.getElementById('ez-gmail-navigation')) {
         // Clear any pending reinit
-        if (reinitTimeout) clearTimeout(reinitTimeout);
+        if (this.reinitTimeout) clearTimeout(this.reinitTimeout);
         
         // Schedule reinit after a short delay
-        reinitTimeout = setTimeout(() => {
+        this.reinitTimeout = setTimeout(() => {
           console.log('Ez Gmail: Navigation bar removed, reinitializing...');
           this.init();
-          reinitTimeout = null;
+          this.reinitTimeout = null;
         }, 500);
       }
     });
     
-    // Observe multiple Gmail containers
-    const targets = [
-      document.querySelector('.nH.bkL'),
-      document.querySelector('.AO'),
-      document.body
-    ].filter(Boolean);
+    // Observe only the main Gmail container, not body (too broad)
+    const target = document.querySelector('.nH.bkL') || document.querySelector('.AO');
     
-    targets.forEach(target => {
-      observer.observe(target, { 
+    if (target) {
+      this.observer.observe(target, { 
         childList: true, 
-        subtree: true,
+        subtree: false, // Changed to false to reduce observation scope
         attributes: false
       });
-    });
-    
-    console.log('Ez Gmail: DOM observer active on', targets.length, 'targets');
+      console.log('Ez Gmail: DOM observer active on', target.className);
+    } else {
+      console.warn('Ez Gmail: Could not find Gmail container for observation');
+    }
   }
 }
 
