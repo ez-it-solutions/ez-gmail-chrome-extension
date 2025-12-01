@@ -1,0 +1,57 @@
+/* Ez Gmail - Gmail Enhancements CSS
+ * Ez IT Solutions - http://www.Ez-IT-Solutions.com
+ * Custom styles for Gmail interface enhancements
+ */
+
+/* Add subtle visual indicators for Ez Gmail features */
+.ez-gmail-highlight {
+  border-left: 3px solid #4CAF50 !important;
+  background-color: rgba(76, 175, 80, 0.05) !important;
+}
+
+/* Custom notification styles for Ez Gmail actions */
+.ez-gmail-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Enhance compose button visibility when using Ez Gmail */
+[gh="cm"]:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+/* Add subtle branding to Gmail interface (non-intrusive) */
+.ez-gmail-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
