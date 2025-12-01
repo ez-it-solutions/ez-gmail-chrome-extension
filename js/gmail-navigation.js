@@ -338,7 +338,7 @@ class GmailNavigation {
     document.getElementById('ez-nav-next')?.addEventListener('click', () => this.nextPage());
     document.getElementById('ez-nav-last')?.addEventListener('click', () => this.lastPage());
     
-    // Quick jump
+    // Quick jump - always goes to inbox page
     const jumpBtn = document.getElementById('ez-nav-jump-btn');
     const jumpInput = document.getElementById('ez-nav-jump-input');
     
@@ -346,7 +346,9 @@ class GmailNavigation {
       jumpBtn.addEventListener('click', () => {
         const page = parseInt(jumpInput.value);
         if (page && page > 0) {
-          this.goToPage(page);
+          // Jump to inbox page, not search results
+          const baseUrl = window.location.origin + window.location.pathname;
+          window.location.href = `${baseUrl}#inbox/p${page}`;
           jumpInput.value = '';
         }
       });
@@ -558,12 +560,14 @@ class GmailNavigation {
         // Clear any pending reinit
         if (this.reinitTimeout) clearTimeout(this.reinitTimeout);
         
-        // Schedule reinit after a short delay
+        // Schedule reinit with longer delay to let Gmail finish loading
         this.reinitTimeout = setTimeout(() => {
           console.log('Ez Gmail: Navigation bar removed, reinitializing...');
+          // Reset initialization flag in case it got stuck
+          this.isInitializing = false;
           this.init();
           this.reinitTimeout = null;
-        }, 500);
+        }, 1000); // Increased from 500ms to 1000ms
       }
     });
     
