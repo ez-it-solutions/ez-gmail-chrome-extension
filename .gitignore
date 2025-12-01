@@ -43,4 +43,4 @@ build/
 *.backup
 
 # Setup and configuration guides
-GITHUB_SETUP.md
+GITHUB_SETUP.md.bak
