@@ -12,8 +12,22 @@ class GmailNavigation {
   
   // Get current page from URL
   getCurrentPage() {
-    const match = window.location.hash.match(/#inbox\/p(\d+)/);
-    return match ? parseInt(match[1]) : 1;
+    // Check for page number in various Gmail views
+    const hash = window.location.hash;
+    
+    // Inbox: #inbox/p2
+    let match = hash.match(/#inbox\/p(\d+)/);
+    if (match) return parseInt(match[1]);
+    
+    // Search: #search/query/p2
+    match = hash.match(/#search\/[^/]+\/p(\d+)/);
+    if (match) return parseInt(match[1]);
+    
+    // Other views: #sent/p2, #spam/p2, etc.
+    match = hash.match(/\/p(\d+)/);
+    if (match) return parseInt(match[1]);
+    
+    return 1;
   }
   
   // Estimate total pages (Gmail doesn't provide this directly)
@@ -36,8 +50,30 @@ class GmailNavigation {
   goToPage(pageNumber) {
     if (pageNumber < 1) pageNumber = 1;
     
-    const currentView = window.location.hash.split('/')[0];
-    window.location.hash = `${currentView}/p${pageNumber}`;
+    const hash = window.location.hash;
+    const baseUrl = window.location.origin + window.location.pathname;
+    let newUrl;
+    
+    // Check if we're in a search view
+    if (hash.includes('#search/')) {
+      // For search results, keep the search query but update page
+      // Format: #search/query/p2
+      const searchMatch = hash.match(/#search\/([^/]+)/);
+      if (searchMatch) {
+        const searchQuery = searchMatch[1];
+        newUrl = `${baseUrl}#search/${searchQuery}/p${pageNumber}`;
+      } else {
+        // Fallback if search format is unexpected
+        newUrl = `${baseUrl}${hash}/p${pageNumber}`;
+      }
+    } else {
+      // For inbox and other views, build clean URL
+      const currentView = hash.split('/')[0].replace('#', '');
+      newUrl = `${baseUrl}#${currentView}/p${pageNumber}`;
+    }
+    
+    // Navigate to the page
+    window.location.href = newUrl;
     this.currentPage = pageNumber;
     this.updateNavigationBar();
   }
@@ -117,50 +153,56 @@ class GmailNavigation {
     nav.id = 'ez-gmail-navigation';
     nav.className = 'ez-gmail-nav-bar';
     
+    // Force initial display style to ensure proper rendering
+    nav.style.cssText = 'display: block !important; visibility: visible !important;';
+    
     nav.innerHTML = `
       <div class="ez-nav-container">
-        <div class="ez-nav-section">
-          <button class="ez-nav-btn" id="ez-nav-first" title="First Page">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="11 17 6 12 11 7"></polyline>
-              <polyline points="18 17 13 12 18 7"></polyline>
-            </svg>
-          </button>
-          <button class="ez-nav-btn" id="ez-nav-prev" title="Previous Page">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
+        <!-- Left Section: Navigation Controls -->
+        <div class="ez-nav-left">
+          <!-- First/Prev Buttons -->
+          <div class="ez-nav-section">
+            <button class="ez-nav-btn" id="ez-nav-first" title="First Page">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="11 17 6 12 11 7"></polyline>
+                <polyline points="18 17 13 12 18 7"></polyline>
+              </svg>
+            </button>
+            <button class="ez-nav-btn" id="ez-nav-prev" title="Previous Page">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Page Numbers -->
+          <div class="ez-nav-section ez-nav-pages" id="ez-nav-pages"></div>
+          
+          <!-- Next/Last Buttons -->
+          <div class="ez-nav-section">
+            <button class="ez-nav-btn" id="ez-nav-next" title="Next Page">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+            <button class="ez-nav-btn" id="ez-nav-last" title="Last Page">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="13 17 18 12 13 7"></polyline>
+                <polyline points="6 17 11 12 6 7"></polyline>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Quick Jump -->
+          <div class="ez-nav-section ez-nav-jump">
+            <span class="ez-nav-label">Go to:</span>
+            <input type="number" id="ez-nav-jump-input" placeholder="Page #" min="1" />
+            <button class="ez-nav-btn-primary" id="ez-nav-jump-btn">Jump</button>
+          </div>
         </div>
         
-        <div class="ez-nav-section ez-nav-pages" id="ez-nav-pages">
-          <!-- Page numbers will be inserted here -->
-        </div>
-        
-        <div class="ez-nav-section">
-          <button class="ez-nav-btn" id="ez-nav-next" title="Next Page">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-          <button class="ez-nav-btn" id="ez-nav-last" title="Last Page">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="13 17 18 12 13 7"></polyline>
-              <polyline points="6 17 11 12 6 7"></polyline>
-            </svg>
-          </button>
-        </div>
-        
-        ${this.settings.navigation.showQuickJump ? `
-        <div class="ez-nav-section ez-nav-jump">
-          <span class="ez-nav-label">Go to:</span>
-          <input type="number" id="ez-nav-jump-input" min="1" placeholder="Page #" />
-          <button class="ez-nav-btn-primary" id="ez-nav-jump-btn">Jump</button>
-        </div>
-        ` : ''}
-        
-        ${this.settings.navigation.showDateJump ? `
-        <div class="ez-nav-section ez-nav-date">
+        <!-- Right Section: Date Jump -->
+        <div class="ez-nav-right">
           <button class="ez-nav-btn-primary" id="ez-nav-date-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -171,7 +213,6 @@ class GmailNavigation {
             Jump to Date
           </button>
         </div>
-        ` : ''}
       </div>
     `;
     
@@ -409,6 +450,11 @@ class GmailNavigation {
     if (insertTarget && !document.getElementById('ez-gmail-navigation')) {
       const nav = this.createNavigationBar();
       
+      if (!nav) {
+        console.error('Ez Gmail: Failed to create navigation bar');
+        return;
+      }
+      
       // Insert after toolbar or at top of main content
       if (toolbar) {
         toolbar.parentNode.insertBefore(nav, toolbar.nextSibling);
@@ -416,24 +462,69 @@ class GmailNavigation {
         mainContent.insertBefore(nav, mainContent.firstChild);
       }
       
-      this.setupEventListeners();
-      this.updateNavigationBar();
+      // Force a reflow to ensure styles are applied
+      nav.offsetHeight;
+      
+      // Wait for DOM and CSS to settle before setting up listeners
+      // Use double requestAnimationFrame for better reliability
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.setupEventListeners();
+          this.updateNavigationBar();
+          
+          // Verify layout is correct
+          const container = nav.querySelector('.ez-nav-container');
+          if (container) {
+            const computedStyle = window.getComputedStyle(container);
+            if (computedStyle.display !== 'flex') {
+              console.warn('Ez Gmail: Layout may not be correct, display is', computedStyle.display);
+            }
+          }
+        });
+      });
       
       // Re-initialize on Gmail navigation changes
       this.observeGmailChanges();
+      
+      console.log('Ez Gmail: Navigation bar initialized successfully');
     }
   }
   
   // Observe Gmail DOM changes to reinitialize if needed
   observeGmailChanges() {
+    // Debounce reinit to avoid too many calls
+    let reinitTimeout = null;
+    
     const observer = new MutationObserver(() => {
       if (!document.getElementById('ez-gmail-navigation')) {
-        this.init();
+        // Clear any pending reinit
+        if (reinitTimeout) clearTimeout(reinitTimeout);
+        
+        // Schedule reinit after a short delay
+        reinitTimeout = setTimeout(() => {
+          console.log('Ez Gmail: Navigation bar removed, reinitializing...');
+          this.init();
+          reinitTimeout = null;
+        }, 500);
       }
     });
     
-    const target = document.querySelector('.nH.bkL') || document.body;
-    observer.observe(target, { childList: true, subtree: false });
+    // Observe multiple Gmail containers
+    const targets = [
+      document.querySelector('.nH.bkL'),
+      document.querySelector('.AO'),
+      document.body
+    ].filter(Boolean);
+    
+    targets.forEach(target => {
+      observer.observe(target, { 
+        childList: true, 
+        subtree: true,
+        attributes: false
+      });
+    });
+    
+    console.log('Ez Gmail: DOM observer active on', targets.length, 'targets');
   }
 }
 

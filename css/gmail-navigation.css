@@ -14,18 +14,36 @@
 }
 
 .ez-nav-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  max-width: 100%;
-  margin: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  flex-direction: row !important;
+}
+
+.ez-nav-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex: 1 !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important;
+}
+
+.ez-nav-right {
+  display: flex !important;
+  align-items: center !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
 }
 
 .ez-nav-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-direction: row !important;
 }
 
 /* Navigation Buttons */
@@ -120,8 +138,8 @@
 
 /* Quick Jump */
 .ez-nav-jump {
-  border-left: 1px solid #e0e0e0;
   padding-left: 16px;
+  border-left: 1px solid #dadce0;
 }
 
 .ez-nav-label {
@@ -144,12 +162,6 @@
   outline: none;
   border-color: #1a73e8;
   box-shadow: none;
-}
-
-/* Date Jump */
-.ez-nav-date {
-  border-left: 1px solid #e0e0e0;
-  padding-left: 16px;
 }
 
 /* Modal */
@@ -409,8 +421,7 @@ body.darkmode #ez-date-mode {
   color: #e8eaed;
 }
 
-body.darkmode .ez-nav-jump,
-body.darkmode .ez-nav-date {
+body.darkmode .ez-nav-jump {
   border-left-color: #5f6368;
 }
 
