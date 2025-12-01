@@ -8,7 +8,35 @@ console.log("Ez Gmail content script loaded");
 let settings = null;
 let gmailNavigation = null;
 
+// Inject CSS directly into the page
+function injectCSS() {
+  // Check if CSS is already injected
+  if (document.getElementById('ez-gmail-navigation-styles')) {
+    console.log('Ez Gmail: CSS already injected');
+    return;
+  }
+  
+  // Fetch and inject the CSS file
+  const cssUrl = chrome.runtime.getURL('css/gmail-navigation.css');
+  
+  fetch(cssUrl)
+    .then(response => response.text())
+    .then(css => {
+      const style = document.createElement('style');
+      style.id = 'ez-gmail-navigation-styles';
+      style.textContent = css;
+      document.head.appendChild(style);
+      console.log('Ez Gmail: CSS injected successfully');
+    })
+    .catch(error => {
+      console.error('Ez Gmail: Failed to inject CSS:', error);
+    });
+}
+
 async function initializeExtension() {
+  // Inject CSS directly into page to ensure it's always present
+  injectCSS();
+  
   // Load settings
   const settingsManager = new SettingsManager();
   await settingsManager.init();

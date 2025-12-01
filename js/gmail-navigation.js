@@ -10,6 +10,7 @@ class GmailNavigation {
     this.navigationBar = null;
     this.observer = null; // Store observer reference to prevent multiple instances
     this.reinitTimeout = null; // Store timeout reference for cleanup
+    this.listenersAttached = false; // Track if listeners are already attached
   }
   
   // Get current page from URL
@@ -332,6 +333,12 @@ class GmailNavigation {
   
   // Setup event listeners
   setupEventListeners() {
+    // Only attach listeners once to prevent duplicates
+    if (this.listenersAttached) {
+      console.log('Ez Gmail: Listeners already attached, skipping...');
+      return;
+    }
+    
     // Navigation buttons
     document.getElementById('ez-nav-first')?.addEventListener('click', () => this.firstPage());
     document.getElementById('ez-nav-prev')?.addEventListener('click', () => this.prevPage());
@@ -369,6 +376,10 @@ class GmailNavigation {
     window.addEventListener('hashchange', () => {
       this.updateNavigationBar();
     });
+    
+    // Mark listeners as attached
+    this.listenersAttached = true;
+    console.log('Ez Gmail: Event listeners attached successfully');
   }
   
   // Show date picker modal
@@ -554,8 +565,17 @@ class GmailNavigation {
       this.reinitTimeout = null;
     }
     
-    // Create new observer
+    // Create new observer with throttling
+    let lastCheck = 0;
+    const CHECK_INTERVAL = 2000; // Only check every 2 seconds
+    
     this.observer = new MutationObserver(() => {
+      const now = Date.now();
+      if (now - lastCheck < CHECK_INTERVAL) {
+        return; // Throttle checks
+      }
+      lastCheck = now;
+      
       if (!document.getElementById('ez-gmail-navigation')) {
         // Clear any pending reinit
         if (this.reinitTimeout) clearTimeout(this.reinitTimeout);
@@ -565,9 +585,10 @@ class GmailNavigation {
           console.log('Ez Gmail: Navigation bar removed, reinitializing...');
           // Reset initialization flag in case it got stuck
           this.isInitializing = false;
+          this.listenersAttached = false; // Reset listeners flag too
           this.init();
           this.reinitTimeout = null;
-        }, 1000); // Increased from 500ms to 1000ms
+        }, 1500); // Increased from 1000ms to 1500ms
       }
     });
     
