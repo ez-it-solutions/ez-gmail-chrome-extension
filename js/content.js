@@ -7,6 +7,8 @@ console.log("Ez Gmail content script loaded");
 // Load settings and initialize
 let settings = null;
 let gmailNavigation = null;
+let cssContent = null; // Cache CSS content
+let cssWatchdogInterval = null; // Store interval ID for cleanup
 
 // Inject CSS directly into the page
 async function injectCSS() {
@@ -16,19 +18,30 @@ async function injectCSS() {
     return Promise.resolve();
   }
   
+  // Use cached CSS if available
+  if (cssContent) {
+    const style = document.createElement('style');
+    style.id = 'ez-gmail-navigation-styles';
+    style.textContent = cssContent;
+    document.head.appendChild(style);
+    console.log('Ez Gmail: CSS injected from cache');
+    document.body.offsetHeight; // Force reflow
+    return Promise.resolve();
+  }
+  
   // Fetch and inject the CSS file
   const cssUrl = chrome.runtime.getURL('css/gmail-navigation.css');
   
   try {
     const response = await fetch(cssUrl);
-    const css = await response.text();
+    cssContent = await response.text(); // Cache for future use
     
     const style = document.createElement('style');
     style.id = 'ez-gmail-navigation-styles';
-    style.textContent = css;
+    style.textContent = cssContent;
     document.head.appendChild(style);
     
-    console.log('Ez Gmail: CSS injected successfully');
+    console.log('Ez Gmail: CSS injected successfully and cached');
     
     // Force a reflow to ensure CSS is applied
     document.body.offsetHeight;
@@ -38,6 +51,55 @@ async function injectCSS() {
     console.error('Ez Gmail: Failed to inject CSS:', error);
     return Promise.reject(error);
   }
+}
+
+// Expose injectCSS globally so it can be called from gmail-navigation.js
+window.ezGmailInjectCSS = injectCSS;
+
+// CSS Watchdog - continuously monitors and ensures CSS is present
+function startCSSWatchdog() {
+  // Clear any existing watchdog
+  if (cssWatchdogInterval) {
+    clearInterval(cssWatchdogInterval);
+  }
+  
+  // Interval-based check every 1 second (more aggressive)
+  cssWatchdogInterval = setInterval(() => {
+    const styleTag = document.getElementById('ez-gmail-navigation-styles');
+    const navBar = document.getElementById('ez-gmail-navigation');
+    
+    // Inject if CSS is missing (regardless of nav bar)
+    if (!styleTag) {
+      console.warn('Ez Gmail: CSS missing! Re-injecting...');
+      injectCSS().catch(err => {
+        console.error('Ez Gmail: Watchdog failed to inject CSS:', err);
+      });
+    }
+  }, 1000); // Check every second
+  
+  // Also use MutationObserver for immediate detection
+  const headObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      // Check if our style tag was removed
+      for (const removedNode of mutation.removedNodes) {
+        if (removedNode.id === 'ez-gmail-navigation-styles') {
+          console.warn('Ez Gmail: CSS was removed from DOM! Re-injecting immediately...');
+          injectCSS().catch(err => {
+            console.error('Ez Gmail: Failed to re-inject CSS after removal:', err);
+          });
+          break;
+        }
+      }
+    }
+  });
+  
+  // Observe changes to <head>
+  headObserver.observe(document.head, {
+    childList: true,
+    subtree: false
+  });
+  
+  console.log('Ez Gmail: CSS watchdog started (interval + MutationObserver)');
 }
 
 async function initializeExtension() {
@@ -55,6 +117,9 @@ async function initializeExtension() {
   settings = settingsManager.getAll();
   
   console.log("Ez Gmail settings loaded:", settings);
+  
+  // Start CSS watchdog to continuously monitor CSS presence
+  startCSSWatchdog();
   
   // Initialize navigation system
   if (settings.navigation.enabled) {
@@ -83,23 +148,25 @@ async function initializeExtension() {
 function waitForGmailLoad() {
   return new Promise((resolve) => {
     const checkInterval = setInterval(() => {
-      // Check for various Gmail elements
-      const toolbar = document.querySelector('[gh="mtb"]') || 
-                     document.querySelector('.aeH') ||
-                     document.querySelector('[role="banner"]') ||
-                     document.querySelector('.nH.bkL'); // Gmail container
+      // Check for Gmail toolbar specifically (more reliable than container)
+      const toolbar = document.querySelector('[gh="mtb"]');
+      const mainContent = document.querySelector('.AO');
       
-      if (toolbar) {
+      // Need at least one of these to be present
+      if (toolbar || mainContent) {
         clearInterval(checkInterval);
-        resolve();
+        console.log('Ez Gmail: Gmail interface detected, toolbar:', !!toolbar, 'mainContent:', !!mainContent);
+        // Add small delay to ensure DOM is fully stable
+        setTimeout(() => resolve(), 500);
       }
-    }, 500);
+    }, 100); // Check more frequently (every 100ms instead of 500ms)
     
-    // Timeout after 10 seconds
+    // Timeout after 15 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
+      console.warn('Ez Gmail: Gmail load timeout, proceeding anyway');
       resolve();
-    }, 10000);
+    }, 15000);
   });
 }
 

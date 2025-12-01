@@ -477,7 +477,7 @@ class GmailNavigation {
   }
   
   // Initialize navigation
-  init() {
+  async init() {
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
       console.log('Ez Gmail: Already initializing, skipping...');
@@ -492,6 +492,19 @@ class GmailNavigation {
     
     this.isInitializing = true;
     
+    // CRITICAL: Ensure CSS is present before creating HTML
+    if (!document.getElementById('ez-gmail-navigation-styles')) {
+      console.warn('Ez Gmail: CSS missing during init, injecting now...');
+      // Use the global injectCSS function if available
+      if (typeof window.ezGmailInjectCSS === 'function') {
+        try {
+          await window.ezGmailInjectCSS();
+        } catch (error) {
+          console.error('Ez Gmail: Failed to inject CSS during init:', error);
+        }
+      }
+    }
+    
     // Find Gmail toolbar and insert navigation
     const toolbar = document.querySelector('[gh="mtb"]') || 
                    document.querySelector('.aeH') ||
@@ -504,11 +517,14 @@ class GmailNavigation {
     
     const insertTarget = toolbar || mainContent;
     
+    console.log('Ez Gmail: Insertion target found:', !!insertTarget, 'toolbar:', !!toolbar, 'mainContent:', !!mainContent);
+    
     if (insertTarget) {
       const nav = this.createNavigationBar();
       
       if (!nav) {
         console.error('Ez Gmail: Failed to create navigation bar');
+        this.isInitializing = false;
         return;
       }
       
@@ -565,22 +581,13 @@ class GmailNavigation {
       this.reinitTimeout = null;
     }
     
-    // Create new observer with throttling
-    let lastCheck = 0;
-    const CHECK_INTERVAL = 2000; // Only check every 2 seconds
-    
+    // Create new observer (no throttling for immediate detection)
     this.observer = new MutationObserver(() => {
-      const now = Date.now();
-      if (now - lastCheck < CHECK_INTERVAL) {
-        return; // Throttle checks
-      }
-      lastCheck = now;
-      
       if (!document.getElementById('ez-gmail-navigation')) {
         // Clear any pending reinit
         if (this.reinitTimeout) clearTimeout(this.reinitTimeout);
         
-        // Schedule reinit with longer delay to let Gmail finish loading
+        // Schedule reinit with delay to let Gmail finish loading
         this.reinitTimeout = setTimeout(() => {
           console.log('Ez Gmail: Navigation bar removed, reinitializing...');
           // Reset initialization flag in case it got stuck
@@ -588,7 +595,7 @@ class GmailNavigation {
           this.listenersAttached = false; // Reset listeners flag too
           this.init();
           this.reinitTimeout = null;
-        }, 1500); // Increased from 1000ms to 1500ms
+        }, 800); // Reduced from 1500ms to 800ms for faster response
       }
     });
     
