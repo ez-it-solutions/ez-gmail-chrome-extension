@@ -23,6 +23,15 @@ async function initializeExtension() {
       gmailNavigation = new GmailNavigation(settings);
       gmailNavigation.init();
       console.log("Gmail navigation initialized");
+      
+      // Retry initialization after a delay if navigation bar not visible
+      // This handles cases where Gmail loads slowly or dynamically
+      setTimeout(() => {
+        if (!document.getElementById('ez-gmail-navigation')) {
+          console.log("Retrying navigation initialization...");
+          gmailNavigation.init();
+        }
+      }, 2000);
     });
   }
 }

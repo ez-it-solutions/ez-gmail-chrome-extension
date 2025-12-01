@@ -66,17 +66,26 @@ class GmailNavigation {
   
   // Search emails by date
   searchByDate(date, mode = 'single') {
-    const dateStr = this.formatDateForSearch(date);
     let searchQuery;
     
     if (mode === 'single') {
-      // Single day search
-      searchQuery = `after:${dateStr} before:${this.getNextDay(dateStr)}`;
+      // Single day search - search for emails ON this specific date
+      // We need to search: after:(day-1) before:(day+1)
+      const targetDate = new Date(date);
+      const beforeDate = new Date(targetDate);
+      beforeDate.setDate(beforeDate.getDate() + 1);
+      
+      const targetStr = this.formatDateForSearch(targetDate);
+      const beforeStr = this.formatDateForSearch(beforeDate);
+      
+      searchQuery = `after:${targetStr} before:${beforeStr}`;
     } else if (mode === 'after') {
       // From date onwards
+      const dateStr = this.formatDateForSearch(new Date(date));
       searchQuery = `after:${dateStr}`;
     } else if (mode === 'before') {
       // Before date
+      const dateStr = this.formatDateForSearch(new Date(date));
       searchQuery = `before:${dateStr}`;
     }
     
@@ -96,14 +105,6 @@ class GmailNavigation {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}/${month}/${day}`;
-  }
-  
-  // Get next day for date range
-  getNextDay(dateStr) {
-    const [year, month, day] = dateStr.split('/').map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setDate(date.getDate() + 1);
-    return this.formatDateForSearch(date);
   }
   
   // Create navigation bar
