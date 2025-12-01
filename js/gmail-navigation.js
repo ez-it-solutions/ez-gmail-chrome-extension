@@ -54,21 +54,26 @@ class GmailNavigation {
     const baseUrl = window.location.origin + window.location.pathname;
     let newUrl;
     
-    // Check if we're in a search view
-    if (hash.includes('#search/')) {
+    // Check if we're CURRENTLY in a search view (not just if hash contains search)
+    // We need to check the actual current location, not old cached values
+    const currentHash = window.location.hash;
+    
+    if (currentHash.startsWith('#search/')) {
       // For search results, keep the search query but update page
       // Format: #search/query/p2
-      const searchMatch = hash.match(/#search\/([^/]+)/);
+      const searchMatch = currentHash.match(/#search\/([^/]+)/);
       if (searchMatch) {
         const searchQuery = searchMatch[1];
-        newUrl = `${baseUrl}#search/${searchQuery}/p${pageNumber}`;
+        // Remove any existing page number from the query
+        const cleanQuery = searchQuery.replace(/\/p\d+$/, '');
+        newUrl = `${baseUrl}#search/${cleanQuery}/p${pageNumber}`;
       } else {
         // Fallback if search format is unexpected
-        newUrl = `${baseUrl}${hash}/p${pageNumber}`;
+        newUrl = `${baseUrl}${currentHash}/p${pageNumber}`;
       }
     } else {
-      // For inbox and other views, build clean URL
-      const currentView = hash.split('/')[0].replace('#', '');
+      // For inbox and other views, build clean URL without any query params
+      const currentView = currentHash.split('/')[0].replace('#', '') || 'inbox';
       newUrl = `${baseUrl}#${currentView}/p${pageNumber}`;
     }
     
@@ -106,9 +111,9 @@ class GmailNavigation {
     
     if (mode === 'single') {
       // Single day search - search for emails ON this specific date
-      // Gmail's "after" is exclusive, so to get Oct 1, we need:
-      // after:2025/10/01 before:2025/10/02
-      const targetDate = new Date(date);
+      // Gmail uses: after:DATE before:DATE+1 to get emails on DATE
+      // Parse date string to avoid timezone issues
+      const targetDate = this.parseDateString(date);
       const afterDate = new Date(targetDate);
       const beforeDate = new Date(targetDate);
       beforeDate.setDate(beforeDate.getDate() + 1);
@@ -119,11 +124,13 @@ class GmailNavigation {
       searchQuery = `after:${afterStr} before:${beforeStr}`;
     } else if (mode === 'after') {
       // From date onwards
-      const dateStr = this.formatDateForSearch(new Date(date));
+      const targetDate = this.parseDateString(date);
+      const dateStr = this.formatDateForSearch(targetDate);
       searchQuery = `after:${dateStr}`;
     } else if (mode === 'before') {
       // Before date
-      const dateStr = this.formatDateForSearch(new Date(date));
+      const targetDate = this.parseDateString(date);
+      const dateStr = this.formatDateForSearch(targetDate);
       searchQuery = `before:${dateStr}`;
     }
     
@@ -136,9 +143,30 @@ class GmailNavigation {
     window.location.href = advancedSearchUrl;
   }
   
+  // Parse date string to avoid timezone issues
+  // Input: "2025-08-01" or Date object
+  // Output: Date object at local midnight
+  parseDateString(dateInput) {
+    if (dateInput instanceof Date) {
+      return dateInput;
+    }
+    
+    // Parse YYYY-MM-DD format to avoid UTC interpretation
+    const parts = String(dateInput).split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1; // Month is 0-indexed
+      const day = parseInt(parts[2]);
+      return new Date(year, month, day);
+    }
+    
+    // Fallback to standard parsing
+    return new Date(dateInput);
+  }
+  
   // Format date for Gmail search (YYYY/MM/DD)
   formatDateForSearch(date) {
-    const d = new Date(date);
+    const d = date instanceof Date ? date : new Date(date);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
