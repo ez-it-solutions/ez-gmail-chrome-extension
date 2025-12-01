@@ -9,33 +9,45 @@ let settings = null;
 let gmailNavigation = null;
 
 // Inject CSS directly into the page
-function injectCSS() {
+async function injectCSS() {
   // Check if CSS is already injected
   if (document.getElementById('ez-gmail-navigation-styles')) {
     console.log('Ez Gmail: CSS already injected');
-    return;
+    return Promise.resolve();
   }
   
   // Fetch and inject the CSS file
   const cssUrl = chrome.runtime.getURL('css/gmail-navigation.css');
   
-  fetch(cssUrl)
-    .then(response => response.text())
-    .then(css => {
-      const style = document.createElement('style');
-      style.id = 'ez-gmail-navigation-styles';
-      style.textContent = css;
-      document.head.appendChild(style);
-      console.log('Ez Gmail: CSS injected successfully');
-    })
-    .catch(error => {
-      console.error('Ez Gmail: Failed to inject CSS:', error);
-    });
+  try {
+    const response = await fetch(cssUrl);
+    const css = await response.text();
+    
+    const style = document.createElement('style');
+    style.id = 'ez-gmail-navigation-styles';
+    style.textContent = css;
+    document.head.appendChild(style);
+    
+    console.log('Ez Gmail: CSS injected successfully');
+    
+    // Force a reflow to ensure CSS is applied
+    document.body.offsetHeight;
+    
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Ez Gmail: Failed to inject CSS:', error);
+    return Promise.reject(error);
+  }
 }
 
 async function initializeExtension() {
-  // Inject CSS directly into page to ensure it's always present
-  injectCSS();
+  // Inject CSS directly into page and WAIT for it to complete
+  try {
+    await injectCSS();
+    console.log('Ez Gmail: CSS injection complete, proceeding with initialization');
+  } catch (error) {
+    console.error('Ez Gmail: CSS injection failed, continuing anyway:', error);
+  }
   
   // Load settings
   const settingsManager = new SettingsManager();
