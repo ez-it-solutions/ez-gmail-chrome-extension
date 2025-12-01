@@ -70,15 +70,17 @@ class GmailNavigation {
     
     if (mode === 'single') {
       // Single day search - search for emails ON this specific date
-      // We need to search: after:(day-1) before:(day+1)
+      // Gmail's "after" is exclusive, so to get Oct 1, we need:
+      // after:2025/10/01 before:2025/10/02
       const targetDate = new Date(date);
+      const afterDate = new Date(targetDate);
       const beforeDate = new Date(targetDate);
       beforeDate.setDate(beforeDate.getDate() + 1);
       
-      const targetStr = this.formatDateForSearch(targetDate);
+      const afterStr = this.formatDateForSearch(afterDate);
       const beforeStr = this.formatDateForSearch(beforeDate);
       
-      searchQuery = `after:${targetStr} before:${beforeStr}`;
+      searchQuery = `after:${afterStr} before:${beforeStr}`;
     } else if (mode === 'after') {
       // From date onwards
       const dateStr = this.formatDateForSearch(new Date(date));

@@ -374,125 +374,93 @@
   }
 }
 
-/* Dark Mode Support - Gmail uses .darkmode class on body */
-body.darkmode .ez-gmail-nav-bar,
-html[data-color-scheme="dark"] .ez-gmail-nav-bar {
-  background: #2d2e30;
-  border-bottom-color: #5f6368;
-}
-
-@media (prefers-color-scheme: dark) {
-  .ez-gmail-nav-bar {
-    background: #2d2e30;
-    border-bottom-color: #5f6368;
-  }
+/* Dark Mode Support - Only apply when Gmail is actually in dark mode */
+body.darkmode .ez-gmail-nav-bar {
+  background: #2d2e30 !important;
+  border-bottom-color: #5f6368 !important;
 }
 
 body.darkmode .ez-nav-btn,
-body.darkmode .ez-nav-page-btn,
-html[data-color-scheme="dark"] .ez-nav-btn,
-html[data-color-scheme="dark"] .ez-nav-page-btn {
+body.darkmode .ez-nav-page-btn {
   color: #e8eaed;
 }
 
 body.darkmode .ez-nav-btn:hover:not(:disabled),
-body.darkmode .ez-nav-page-btn:hover,
-html[data-color-scheme="dark"] .ez-nav-btn:hover:not(:disabled),
-html[data-color-scheme="dark"] .ez-nav-page-btn:hover {
+body.darkmode .ez-nav-page-btn:hover {
   background: #3c4043;
   color: #e8eaed;
 }
 
-body.darkmode .ez-nav-page-btn.active,
-html[data-color-scheme="dark"] .ez-nav-page-btn.active {
+body.darkmode .ez-nav-page-btn.active {
   background: #185abc;
   color: #e8eaed;
 }
 
 body.darkmode .ez-nav-label,
-body.darkmode .ez-nav-ellipsis,
-html[data-color-scheme="dark"] .ez-nav-label,
-html[data-color-scheme="dark"] .ez-nav-ellipsis {
+body.darkmode .ez-nav-ellipsis {
   color: #9aa0a6;
 }
 
 body.darkmode #ez-nav-jump-input,
 body.darkmode #ez-date-input,
-body.darkmode #ez-date-mode,
-html[data-color-scheme="dark"] #ez-nav-jump-input,
-html[data-color-scheme="dark"] #ez-date-input,
-html[data-color-scheme="dark"] #ez-date-mode {
+body.darkmode #ez-date-mode {
   background: #3c4043;
   border-color: #5f6368;
   color: #e8eaed;
 }
 
 body.darkmode .ez-nav-jump,
-body.darkmode .ez-nav-date,
-html[data-color-scheme="dark"] .ez-nav-jump,
-html[data-color-scheme="dark"] .ez-nav-date {
+body.darkmode .ez-nav-date {
   border-left-color: #5f6368;
 }
 
 /* Dark Mode Modal */
-body.darkmode .ez-modal,
-html[data-color-scheme="dark"] .ez-modal {
+body.darkmode .ez-modal {
   background: rgba(0, 0, 0, 0.7);
 }
 
-body.darkmode .ez-modal-content,
-html[data-color-scheme="dark"] .ez-modal-content {
+body.darkmode .ez-modal-content {
   background: #2d2e30;
   color: #e8eaed;
 }
 
-body.darkmode .ez-modal-header,
-html[data-color-scheme="dark"] .ez-modal-header {
+body.darkmode .ez-modal-header {
   border-bottom-color: #5f6368;
 }
 
-body.darkmode .ez-modal-header h3,
-html[data-color-scheme="dark"] .ez-modal-header h3 {
+body.darkmode .ez-modal-header h3 {
   color: #e8eaed;
 }
 
-body.darkmode .ez-modal-close,
-html[data-color-scheme="dark"] .ez-modal-close {
+body.darkmode .ez-modal-close {
   color: #9aa0a6;
 }
 
-body.darkmode .ez-modal-close:hover,
-html[data-color-scheme="dark"] .ez-modal-close:hover {
+body.darkmode .ez-modal-close:hover {
   background: #3c4043;
   color: #e8eaed;
 }
 
-body.darkmode .ez-date-btn,
-html[data-color-scheme="dark"] .ez-date-btn {
+body.darkmode .ez-date-btn {
   background: #3c4043;
   border-color: #5f6368;
   color: #e8eaed;
 }
 
-body.darkmode .ez-date-btn:hover,
-html[data-color-scheme="dark"] .ez-date-btn:hover {
+body.darkmode .ez-date-btn:hover {
   background: #5f6368;
   border-color: #9aa0a6;
 }
 
-body.darkmode .ez-divider,
-html[data-color-scheme="dark"] .ez-divider {
+body.darkmode .ez-divider {
   color: #9aa0a6;
 }
 
 body.darkmode .ez-divider::before,
-body.darkmode .ez-divider::after,
-html[data-color-scheme="dark"] .ez-divider::before,
-html[data-color-scheme="dark"] .ez-divider::after {
+body.darkmode .ez-divider::after {
   background: #5f6368;
 }
 
-body.darkmode .ez-date-picker label,
-html[data-color-scheme="dark"] .ez-date-picker label {
+body.darkmode .ez-date-picker label {
   color: #e8eaed;
 }
