@@ -34,9 +34,22 @@
   "content_scripts": [
     {
       "matches": ["https://mail.google.com/*"],
-      "js": ["js/content.js"],
-      "css": ["css/gmail-enhancements.css"],
+      "js": [
+        "js/settings.js",
+        "js/gmail-navigation.js",
+        "js/content.js"
+      ],
+      "css": [
+        "css/gmail-enhancements.css",
+        "css/gmail-navigation.css"
+      ],
       "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pages/settings.html", "css/*.css", "js/*.js"],
+      "matches": ["https://mail.google.com/*"]
     }
   ]
 }

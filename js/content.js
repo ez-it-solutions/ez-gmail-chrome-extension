@@ -4,6 +4,51 @@
 
 console.log("Ez Gmail content script loaded");
 
+// Load settings and initialize
+let settings = null;
+let gmailNavigation = null;
+
+async function initializeExtension() {
+  // Load settings
+  const settingsManager = new SettingsManager();
+  await settingsManager.init();
+  settings = settingsManager.getAll();
+  
+  console.log("Ez Gmail settings loaded:", settings);
+  
+  // Initialize navigation system
+  if (settings.navigation.enabled) {
+    // Wait for Gmail to load
+    waitForGmailLoad().then(() => {
+      gmailNavigation = new GmailNavigation(settings);
+      gmailNavigation.init();
+      console.log("Gmail navigation initialized");
+    });
+  }
+}
+
+// Wait for Gmail interface to load
+function waitForGmailLoad() {
+  return new Promise((resolve) => {
+    const checkInterval = setInterval(() => {
+      const toolbar = document.querySelector('[gh="mtb"]') || document.querySelector('.aeH');
+      if (toolbar) {
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 500);
+    
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      resolve();
+    }, 10000);
+  });
+}
+
+// Initialize
+initializeExtension();
+
 // Listen for messages from popup or background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("Message received:", request);
@@ -31,6 +76,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       
     case "searchEmails":
       searchForText(request.text);
+      sendResponse({ success: true });
+      break;
+      
+    case "reloadSettings":
+      // Reload settings and reinitialize
+      initializeExtension();
       sendResponse({ success: true });
       break;
   }

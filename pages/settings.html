@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Ez Gmail</title>
+  <link rel="stylesheet" href="../css/settings.css">
+</head>
+<body>
+  <div class="settings-container">
+    <header class="settings-header">
+      <div class="header-content">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <h1>Ez Gmail Settings</h1>
+        </div>
+        <div class="header-actions">
+          <button id="exportBtn" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export
+          </button>
+          <button id="importBtn" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Import
+          </button>
+          <button id="resetBtn" class="btn btn-danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            Reset
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="settings-body">
+      <nav class="settings-tabs">
+        <button class="tab-btn active" data-tab="navigation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Navigation
+        </button>
+        <button class="tab-btn" data-tab="dateJump">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Date Jump
+        </button>
+        <button class="tab-btn" data-tab="sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+          Sidebar
+        </button>
+        <button class="tab-btn" data-tab="quickActions">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          Quick Actions
+        </button>
+        <button class="tab-btn" data-tab="templates">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          Templates
+        </button>
+        <button class="tab-btn" data-tab="shortcuts">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path>
+          </svg>
+          Shortcuts
+        </button>
+        <button class="tab-btn" data-tab="ui">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+          </svg>
+          UI/UX
+        </button>
+        <button class="tab-btn" data-tab="advanced">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+          </svg>
+          Advanced
+        </button>
+      </nav>
+
+      <div class="settings-content">
+        <!-- Navigation Tab -->
+        <div class="tab-content active" id="navigation-tab">
+          <h2>Navigation Settings</h2>
+          <p class="tab-description">Configure page navigation and pagination options</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="nav-enabled" checked>
+                <span>Enable Enhanced Navigation</span>
+              </label>
+              <p class="setting-help">Show advanced page navigation controls in Gmail</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="nav-page-numbers" checked>
+                <span>Show Page Numbers</span>
+              </label>
+              <p class="setting-help">Display clickable page numbers for quick navigation</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="nav-date-jump" checked>
+                <span>Show Date Jump</span>
+              </label>
+              <p class="setting-help">Enable jump to specific date functionality</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="nav-quick-jump" checked>
+                <span>Show Quick Jump</span>
+              </label>
+              <p class="setting-help">Show quick jump input for page numbers</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Pagination Style</span>
+                <select id="nav-pagination-style">
+                  <option value="full">Full (1 2 3 ... 50 51 52)</option>
+                  <option value="compact">Compact (1 ... 25 ... 50)</option>
+                  <option value="minimal">Minimal (Previous/Next only)</option>
+                </select>
+              </label>
+              <p class="setting-help">Choose how page numbers are displayed</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Max Visible Pages</span>
+                <input type="number" id="nav-max-pages" min="3" max="20" value="10">
+              </label>
+              <p class="setting-help">Maximum number of page buttons to show at once</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date Jump Tab -->
+        <div class="tab-content" id="dateJump-tab">
+          <h2>Date Jump Settings</h2>
+          <p class="tab-description">Configure date navigation and quick date options</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="date-enabled" checked>
+                <span>Enable Date Jump</span>
+              </label>
+              <p class="setting-help">Allow jumping to emails from specific dates</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Default View</span>
+                <select id="date-default-view">
+                  <option value="calendar">Calendar Picker</option>
+                  <option value="list">Date List</option>
+                  <option value="quick">Quick Dates Only</option>
+                </select>
+              </label>
+              <p class="setting-help">Choose the default date selection interface</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="date-relative" checked>
+                <span>Show Relative Dates</span>
+              </label>
+              <p class="setting-help">Show options like "Today", "Yesterday", "Last Week"</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Date Format</span>
+                <select id="date-format">
+                  <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2025)</option>
+                  <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2025)</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD (2025-12-31)</option>
+                </select>
+              </label>
+              <p class="setting-help">Choose your preferred date format</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Tab -->
+        <div class="tab-content" id="sidebar-tab">
+          <h2>Sidebar Settings</h2>
+          <p class="tab-description">Customize the Ez Gmail sidebar appearance and behavior</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="sidebar-enabled" checked>
+                <span>Enable Sidebar</span>
+              </label>
+              <p class="setting-help">Show the Ez Gmail sidebar in Gmail</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Position</span>
+                <select id="sidebar-position">
+                  <option value="right">Right Side</option>
+                  <option value="left">Left Side</option>
+                </select>
+              </label>
+              <p class="setting-help">Choose which side of the screen to show the sidebar</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Width (pixels)</span>
+                <input type="number" id="sidebar-width" min="200" max="500" value="300" step="10">
+              </label>
+              <p class="setting-help">Set the sidebar width in pixels</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="sidebar-collapsible" checked>
+                <span>Collapsible</span>
+              </label>
+              <p class="setting-help">Allow sidebar to be collapsed/expanded</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="sidebar-stats" checked>
+                <span>Show Statistics</span>
+              </label>
+              <p class="setting-help">Display email statistics in sidebar</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions Tab -->
+        <div class="tab-content" id="quickActions-tab">
+          <h2>Quick Actions Settings</h2>
+          <p class="tab-description">Enable or disable quick action buttons</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="qa-enabled" checked>
+                <span>Enable Quick Actions</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="qa-compose" checked>
+                <span>Show Quick Compose</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="qa-search" checked>
+                <span>Show Quick Search</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="qa-mark-read" checked>
+                <span>Show Mark All Read</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="qa-archive-all">
+                <span>Show Archive All</span>
+              </label>
+              <p class="setting-help">⚠️ Use with caution - archives all visible emails</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Templates Tab -->
+        <div class="tab-content" id="templates-tab">
+          <h2>Template Settings</h2>
+          <p class="tab-description">Configure email template options</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="tmpl-enabled" checked>
+                <span>Enable Templates</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="tmpl-in-compose" checked>
+                <span>Show in Compose Window</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="tmpl-in-sidebar" checked>
+                <span>Show in Sidebar</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Default Category</span>
+                <select id="tmpl-default-category">
+                  <option value="Work">Work</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Follow-up">Follow-up</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shortcuts Tab -->
+        <div class="tab-content" id="shortcuts-tab">
+          <h2>Keyboard Shortcuts</h2>
+          <p class="tab-description">Customize keyboard shortcuts for quick actions</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="shortcuts-enabled" checked>
+                <span>Enable Keyboard Shortcuts</span>
+              </label>
+            </div>
+            
+            <div class="shortcut-list">
+              <div class="shortcut-item">
+                <span class="shortcut-label">Quick Compose</span>
+                <input type="text" id="shortcut-compose" value="Ctrl+Shift+C" readonly>
+                <button class="btn-small">Edit</button>
+              </div>
+              
+              <div class="shortcut-item">
+                <span class="shortcut-label">Quick Search</span>
+                <input type="text" id="shortcut-search" value="Ctrl+Shift+F" readonly>
+                <button class="btn-small">Edit</button>
+              </div>
+              
+              <div class="shortcut-item">
+                <span class="shortcut-label">Date Jump</span>
+                <input type="text" id="shortcut-date" value="Ctrl+Shift+D" readonly>
+                <button class="btn-small">Edit</button>
+              </div>
+              
+              <div class="shortcut-item">
+                <span class="shortcut-label">Page Jump</span>
+                <input type="text" id="shortcut-page" value="Ctrl+Shift+P" readonly>
+                <button class="btn-small">Edit</button>
+              </div>
+              
+              <div class="shortcut-item">
+                <span class="shortcut-label">Toggle Sidebar</span>
+                <input type="text" id="shortcut-sidebar" value="Ctrl+Shift+S" readonly>
+                <button class="btn-small">Edit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UI/UX Tab -->
+        <div class="tab-content" id="ui-tab">
+          <h2>UI/UX Settings</h2>
+          <p class="tab-description">Customize the look and feel of Ez Gmail</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Theme</span>
+                <select id="ui-theme">
+                  <option value="auto">Auto (Match Gmail)</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="ui-animations" checked>
+                <span>Enable Animations</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="ui-notifications" checked>
+                <span>Show Notifications</span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <span>Notification Duration (ms)</span>
+                <input type="number" id="ui-notif-duration" min="1000" max="10000" value="3000" step="500">
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="ui-compact">
+                <span>Compact Mode</span>
+              </label>
+              <p class="setting-help">Use smaller spacing and fonts</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Tab -->
+        <div class="tab-content" id="advanced-tab">
+          <h2>Advanced Settings</h2>
+          <p class="tab-description">Advanced options for power users</p>
+          
+          <div class="setting-group">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="adv-debug">
+                <span>Debug Mode</span>
+              </label>
+              <p class="setting-help">Enable console logging for troubleshooting</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="adv-cache" checked>
+                <span>Enable Caching</span>
+              </label>
+              <p class="setting-help">Cache data for better performance</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="adv-autosave" checked>
+                <span>Auto-Save Settings</span>
+              </label>
+              <p class="setting-help">Automatically save changes</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="adv-sync" checked>
+                <span>Sync Settings Across Devices</span>
+              </label>
+              <p class="setting-help">Use Chrome sync to share settings</p>
+            </div>
+            
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="adv-experimental">
+                <span>Enable Experimental Features</span>
+              </label>
+              <p class="setting-help">⚠️ May be unstable</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="settings-footer">
+      <div class="footer-content">
+        <button id="saveBtn" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Save Settings
+        </button>
+        <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+      </div>
+      <div class="save-status" id="saveStatus"></div>
+    </footer>
+  </div>
+
+  <input type="file" id="importFile" accept=".json" style="display: none;">
+
+  <script src="../js/settings.js"></script>
+  <script src="../js/settings-ui.js"></script>
+</body>
+</html>

@@ -97,6 +97,15 @@ document.getElementById("markAllRead").addEventListener("click", async () => {
   }
 });
 
+// Open settings page
+document.getElementById("settingsBtn").addEventListener("click", async () => {
+  try {
+    await chrome.tabs.create({ url: "pages/settings.html" });
+  } catch (error) {
+    console.error("Error opening settings page:", error);
+  }
+});
+
 // Open about page
 document.getElementById("aboutBtn").addEventListener("click", async () => {
   try {

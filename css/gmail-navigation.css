@@ -1,0 +1,388 @@
+/* Ez Gmail - Gmail Navigation CSS
+ * Ez IT Solutions - http://www.Ez-IT-Solutions.com
+ * Styles for advanced page and date navigation
+ */
+
+/* Navigation Bar */
+.ez-gmail-nav-bar {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.ez-nav-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.ez-nav-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Navigation Buttons */
+.ez-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dadce0;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #5f6368;
+}
+
+.ez-nav-btn:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.ez-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ez-nav-btn svg {
+  pointer-events: none;
+}
+
+/* Primary Button */
+.ez-nav-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ez-nav-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(103, 126, 234, 0.3);
+}
+
+/* Page Numbers */
+.ez-nav-pages {
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.ez-nav-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #dadce0;
+  background: white;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ez-nav-page-btn:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.ez-nav-page-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.ez-nav-ellipsis {
+  padding: 0 4px;
+  color: #5f6368;
+  font-weight: 500;
+}
+
+/* Quick Jump */
+.ez-nav-jump {
+  border-left: 1px solid #e0e0e0;
+  padding-left: 16px;
+}
+
+.ez-nav-label {
+  font-size: 13px;
+  color: #5f6368;
+  font-weight: 500;
+}
+
+#ez-nav-jump-input {
+  width: 80px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+#ez-nav-jump-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(103, 126, 234, 0.1);
+}
+
+/* Date Jump */
+.ez-nav-date {
+  border-left: 1px solid #e0e0e0;
+  padding-left: 16px;
+}
+
+/* Modal */
+.ez-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ez-modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ez-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ez-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #202124;
+}
+
+.ez-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  color: #5f6368;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.ez-modal-close:hover {
+  background: #f8f9fa;
+  color: #202124;
+}
+
+.ez-modal-body {
+  padding: 24px;
+}
+
+/* Quick Dates */
+.ez-quick-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ez-date-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 16px;
+  border: 1px solid #dadce0;
+  background: white;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ez-date-btn:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+/* Divider */
+.ez-divider {
+  text-align: center;
+  color: #5f6368;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 16px 0;
+  position: relative;
+}
+
+.ez-divider::before,
+.ez-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 30px);
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.ez-divider::before {
+  left: 0;
+}
+
+.ez-divider::after {
+  right: 0;
+}
+
+/* Date Picker */
+.ez-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ez-date-picker label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+}
+
+#ez-date-input {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+#ez-date-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(103, 126, 234, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ez-nav-container {
+    gap: 8px;
+  }
+  
+  .ez-nav-pages {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .ez-nav-jump,
+  .ez-nav-date {
+    border-left: none;
+    padding-left: 0;
+  }
+  
+  .ez-quick-dates {
+    flex-direction: column;
+  }
+  
+  .ez-date-btn {
+    min-width: 100%;
+  }
+  
+  .ez-date-picker {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .ez-gmail-nav-bar {
+    background: #202124;
+    border-bottom-color: #3c4043;
+  }
+  
+  .ez-nav-btn,
+  .ez-nav-page-btn,
+  .ez-date-btn {
+    background: #292a2d;
+    border-color: #3c4043;
+    color: #e8eaed;
+  }
+  
+  .ez-nav-btn:hover:not(:disabled),
+  .ez-nav-page-btn:hover,
+  .ez-date-btn:hover {
+    background: #3c4043;
+  }
+  
+  #ez-nav-jump-input,
+  #ez-date-input {
+    background: #292a2d;
+    border-color: #3c4043;
+    color: #e8eaed;
+  }
+  
+  .ez-modal-content {
+    background: #292a2d;
+    color: #e8eaed;
+  }
+  
+  .ez-modal-header {
+    border-bottom-color: #3c4043;
+  }
+  
+  .ez-modal-header h3 {
+    color: #e8eaed;
+  }
+}
