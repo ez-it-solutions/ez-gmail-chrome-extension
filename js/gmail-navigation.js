@@ -184,15 +184,191 @@ class GmailNavigation {
     nav.id = 'ez-gmail-navigation';
     nav.className = 'ez-gmail-nav-bar';
     
-    // Force initial display style to ensure proper rendering
-    nav.style.cssText = 'display: block !important; visibility: visible !important;';
+    // Inline critical CSS directly into the element
+    nav.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      background: #f5f5f5 !important;
+      border-bottom: 1px solid #dadce0 !important;
+      padding: 8px 16px !important;
+      box-shadow: none !important;
+      z-index: 100 !important;
+      font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    `;
     
     nav.innerHTML = `
-      <div class="ez-nav-container">
+      <style>
+        /* Inline critical CSS for guaranteed styling */
+        #ez-gmail-navigation .ez-nav-container {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: 16px !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          flex-direction: row !important;
+        }
+        
+        #ez-gmail-navigation .ez-nav-left {
+          display: flex !important;
+          align-items: center !important;
+          gap: 12px !important;
+          flex: 1 !important;
+          flex-wrap: wrap !important;
+          flex-direction: row !important;
+        }
+        
+        #ez-gmail-navigation .ez-nav-right {
+          display: flex !important;
+          align-items: center !important;
+          margin-left: auto !important;
+          flex-shrink: 0 !important;
+        }
+        
+        #ez-gmail-navigation .ez-nav-section {
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          flex-direction: row !important;
+        }
+        
+        #ez-gmail-navigation .ez-nav-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 36px;
+          height: 36px;
+          padding: 0 8px;
+          border: none;
+          background: transparent;
+          border-radius: 18px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          color: #5f6368;
+        }
+        
+        #ez-gmail-navigation .ez-nav-btn:hover:not(:disabled) {
+          background: #e8eaed;
+          color: #202124;
+        }
+        
+        #ez-gmail-navigation .ez-nav-btn:disabled {
+          opacity: 0.38;
+          cursor: default;
+        }
+        
+        #ez-gmail-navigation .ez-nav-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0 16px;
+          height: 36px;
+          background: #1a73e8;
+          color: white;
+          border: none;
+          border-radius: 18px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        
+        #ez-gmail-navigation .ez-nav-btn-primary:hover {
+          background: #1765cc;
+          box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+        
+        #ez-gmail-navigation .ez-nav-page-btn {
+          min-width: 36px;
+          height: 36px;
+          padding: 0 8px;
+          border: none;
+          background: transparent;
+          border-radius: 18px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #5f6368;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        
+        #ez-gmail-navigation .ez-nav-page-btn:hover {
+          background: #e8eaed;
+          color: #202124;
+        }
+        
+        #ez-gmail-navigation .ez-nav-page-btn.active {
+          background: #d3e3fd;
+          color: #1a73e8;
+          font-weight: 700;
+        }
+        
+        #ez-gmail-navigation .ez-nav-label {
+          font-size: 13px;
+          color: #5f6368;
+          font-weight: 500;
+        }
+        
+        #ez-gmail-navigation .ez-nav-jump {
+          padding-left: 16px;
+          border-left: 1px solid #dadce0;
+        }
+        
+        #ez-gmail-navigation #ez-nav-jump-input {
+          width: 80px;
+          height: 36px;
+          padding: 0 12px;
+          border: 1px solid #dadce0;
+          border-radius: 4px;
+          font-size: 14px;
+          font-family: 'Google Sans', Roboto, Arial, sans-serif;
+        }
+        
+        #ez-gmail-navigation #ez-nav-jump-input:focus {
+          outline: none;
+          border-color: #1a73e8;
+          box-shadow: none;
+        }
+        
+        /* Dark mode support */
+        body.darkmode #ez-gmail-navigation {
+          background: #2d2e30 !important;
+          border-bottom-color: #5f6368 !important;
+        }
+        
+        body.darkmode #ez-gmail-navigation .ez-nav-btn,
+        body.darkmode #ez-gmail-navigation .ez-nav-page-btn,
+        body.darkmode #ez-gmail-navigation .ez-nav-label {
+          color: #e8eaed;
+        }
+        
+        body.darkmode #ez-gmail-navigation .ez-nav-btn:hover:not(:disabled),
+        body.darkmode #ez-gmail-navigation .ez-nav-page-btn:hover {
+          background: #3c4043;
+        }
+        
+        body.darkmode #ez-gmail-navigation .ez-nav-page-btn.active {
+          background: #185abc;
+        }
+        
+        body.darkmode #ez-gmail-navigation #ez-nav-jump-input {
+          background: #3c4043;
+          border-color: #5f6368;
+          color: #e8eaed;
+        }
+        
+        body.darkmode #ez-gmail-navigation .ez-nav-jump {
+          border-left-color: #5f6368;
+        }
+      </style>
+      
+      <div class="ez-nav-container" style="display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 16px !important; flex-direction: row !important;">
         <!-- Left Section: Navigation Controls -->
-        <div class="ez-nav-left">
+        <div class="ez-nav-left" style="display: flex !important; align-items: center !important; gap: 12px !important; flex: 1 !important; flex-wrap: wrap !important; flex-direction: row !important;">
           <!-- First/Prev Buttons -->
-          <div class="ez-nav-section">
+          <div class="ez-nav-section" style="display: flex !important; align-items: center !important; gap: 8px !important; flex-direction: row !important;">
             <button class="ez-nav-btn" id="ez-nav-first" title="First Page">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="11 17 6 12 11 7"></polyline>
@@ -233,7 +409,7 @@ class GmailNavigation {
         </div>
         
         <!-- Right Section: Date Jump -->
-        <div class="ez-nav-right">
+        <div class="ez-nav-right" style="display: flex !important; align-items: center !important; margin-left: auto !important; flex-shrink: 0 !important;">
           <button class="ez-nav-btn-primary" id="ez-nav-date-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -477,7 +653,7 @@ class GmailNavigation {
   }
   
   // Initialize navigation
-  async init() {
+  init() {
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
       console.log('Ez Gmail: Already initializing, skipping...');
@@ -491,19 +667,6 @@ class GmailNavigation {
     }
     
     this.isInitializing = true;
-    
-    // CRITICAL: Ensure CSS is present before creating HTML
-    if (!document.getElementById('ez-gmail-navigation-styles')) {
-      console.warn('Ez Gmail: CSS missing during init, injecting now...');
-      // Use the global injectCSS function if available
-      if (typeof window.ezGmailInjectCSS === 'function') {
-        try {
-          await window.ezGmailInjectCSS();
-        } catch (error) {
-          console.error('Ez Gmail: Failed to inject CSS during init:', error);
-        }
-      }
-    }
     
     // Find Gmail toolbar and insert navigation
     const toolbar = document.querySelector('[gh="mtb"]') || 
