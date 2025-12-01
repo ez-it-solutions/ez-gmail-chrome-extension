@@ -8,6 +8,37 @@ A powerful and beautiful Chrome extension that enhances your Gmail experience wi
 
 ## 🚀 Features
 
+### 🚀 **Advanced Page Navigation** (NEW!)
+Gmail's biggest limitation solved! Navigate through thousands of emails effortlessly.
+
+- **Direct Page Jump**: Click page numbers to jump instantly (1, 2, 3 ... 50, 51, 52)
+- **Quick Jump Input**: Type any page number and go directly there
+- **First/Last Page**: Jump to beginning or end with one click
+- **Smart Pagination**: Choose from Full, Compact, or Minimal display styles
+- **Keyboard Shortcut**: Ctrl+Shift+P for quick page jump
+
+**Problem Solved**: With 10,000+ emails at 50 per page, that's 200 pages. Traditional Gmail requires 200 clicks to reach the end. Ez Gmail gets you there in seconds!
+
+### 📅 **Date Jump** (NEW!)
+Jump to emails from any specific date instantly.
+
+- **Calendar Picker**: Visual date selection interface
+- **Quick Dates**: Today, Yesterday, Last Week, Last Month, Last Year
+- **Custom Dates**: Select any date from the calendar
+- **Smart Search**: Uses Gmail's advanced search operators automatically
+- **Keyboard Shortcut**: Ctrl+Shift+D opens date picker
+
+**Use Case**: Need an email from 6 months ago? Click "Jump to Date", select the date, and you're there in 2 seconds instead of clicking through hundreds of pages.
+
+### ⚙️ **Comprehensive Settings Panel** (NEW!)
+Customize every aspect of Ez Gmail with a beautiful tabbed interface.
+
+- **8 Setting Categories**: Navigation, Date Jump, Sidebar, Quick Actions, Templates, Shortcuts, UI/UX, Advanced
+- **Import/Export**: Backup and share your settings
+- **Auto-Save**: Changes save automatically (optional)
+- **Sync Across Devices**: Settings sync via Chrome
+- **Reset to Defaults**: One-click factory reset
+
 ### ✉️ Quick Compose
 Open Gmail's compose window instantly with a single click or keyboard shortcut (Ctrl+Shift+C). Perfect for rapid email responses and maintaining productivity flow.
 
@@ -99,9 +130,36 @@ Open Gmail's compose window instantly with a single click or keyboard shortcut (
 2. **Select text** → Right-click → "Search Emails for [text]"
 3. Quick access to all features without opening the popup
 
+### Advanced Page Navigation
+1. Look for the navigation bar below Gmail's toolbar
+2. **Click Page Numbers**: Jump to any page instantly
+3. **Quick Jump**: Type page number in input box, press Enter
+4. **First/Last**: Use double arrow buttons
+5. **Keyboard Shortcut**: Press Ctrl+Shift+P, type page number
+
+### Date Jump
+1. Click the "Jump to Date" button in navigation bar
+2. **Quick Dates**: Click Today, Yesterday, Last Week, etc.
+3. **Custom Date**: Select any date from calendar picker
+4. **Keyboard Shortcut**: Press Ctrl+Shift+D to open picker
+
+### Settings Configuration
+1. Click Ez Gmail extension icon
+2. Click "Settings" button
+3. Navigate through 8 tabbed categories:
+   - Navigation, Date Jump, Sidebar, Quick Actions
+   - Templates, Shortcuts, UI/UX, Advanced
+4. Adjust settings as needed
+5. Click "Save Settings"
+6. **Import/Export**: Backup or restore settings
+7. **Reset**: Restore factory defaults
+
 ### Keyboard Shortcuts
 - **Ctrl+Shift+C**: Quick compose email
 - **Ctrl+Shift+F**: Focus search box
+- **Ctrl+Shift+D**: Open date jump picker
+- **Ctrl+Shift+P**: Open quick page jump
+- **Ctrl+Shift+S**: Toggle sidebar (coming soon)
 
 ## 🛠️ Technical Details
 
