@@ -255,15 +255,90 @@ class TemplateManager {
 
   // Get template statistics
   getStatistics() {
+    const byCategory = {};
+    this.categories.forEach(cat => {
+      byCategory[cat] = this.templates.filter(t => t.category === cat).length;
+    });
+
     return {
       total: this.templates.length,
-      byCategory: this.categories.map(cat => ({
-        category: cat,
-        count: this.templates.filter(t => t.category === cat).length
-      })),
+      byCategory,
       totalUsage: this.templates.reduce((sum, t) => sum + t.usageCount, 0),
-      mostUsed: this.getMostUsed(3)
+      mostUsed: this.getMostUsed(5)
     };
+  }
+
+  // Import prebuilt templates from library
+  async importPrebuiltTemplates(category = 'all') {
+    try {
+      // Check if TEMPLATE_LIBRARY is available
+      if (typeof TEMPLATE_LIBRARY === 'undefined') {
+        console.error('Ez Gmail: Template library not loaded');
+        return false;
+      }
+
+      let templatesToImport = [];
+
+      if (category === 'all') {
+        // Import all categories
+        Object.values(TEMPLATE_LIBRARY).forEach(categoryTemplates => {
+          templatesToImport = templatesToImport.concat(categoryTemplates);
+        });
+      } else if (TEMPLATE_LIBRARY[category]) {
+        // Import specific category
+        templatesToImport = TEMPLATE_LIBRARY[category];
+      } else {
+        console.error('Ez Gmail: Invalid category:', category);
+        return false;
+      }
+
+      // Import templates (merge with existing)
+      const existingNames = new Set(this.templates.map(t => t.name));
+      let importedCount = 0;
+
+      for (const template of templatesToImport) {
+        // Skip if template with same name already exists
+        if (existingNames.has(template.name)) {
+          continue;
+        }
+
+        // Create template
+        await this.createTemplate(template);
+        importedCount++;
+      }
+
+      console.log(`Ez Gmail: Imported ${importedCount} prebuilt templates`);
+      return importedCount;
+    } catch (error) {
+      console.error('Ez Gmail: Error importing prebuilt templates:', error);
+      return false;
+    }
+  }
+
+  // Check if user has any templates
+  hasTemplates() {
+    return this.templates.length > 0;
+  }
+
+  // Get available prebuilt categories
+  getPrebuiltCategories() {
+    if (typeof TEMPLATE_LIBRARY === 'undefined') {
+      return [];
+    }
+    return Object.keys(TEMPLATE_LIBRARY);
+  }
+
+  // Get count of prebuilt templates by category
+  getPrebuiltCount(category = 'all') {
+    if (typeof TEMPLATE_LIBRARY === 'undefined') {
+      return 0;
+    }
+
+    if (category === 'all') {
+      return Object.values(TEMPLATE_LIBRARY).reduce((sum, templates) => sum + templates.length, 0);
+    }
+
+    return TEMPLATE_LIBRARY[category] ? TEMPLATE_LIBRARY[category].length : 0;
   }
 
   // Duplicate template

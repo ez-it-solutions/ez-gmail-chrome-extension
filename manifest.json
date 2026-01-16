@@ -36,6 +36,7 @@
       "matches": ["https://mail.google.com/*"],
       "js": [
         "js/settings.js",
+        "js/template-library.js",
         "js/template-manager.js",
         "js/template-ui.js",
         "js/compose-integration.js",

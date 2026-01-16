@@ -80,6 +80,10 @@ class TemplateUI {
   // Render template list
   renderTemplateList(templates) {
     if (templates.length === 0) {
+      // Check if user has NO templates at all (not just filtered out)
+      const hasNoTemplates = this.templateManager.getAllTemplates().length === 0;
+      const prebuiltCount = this.templateManager.getPrebuiltCount('all');
+      
       return `
         <div class="ez-template-empty">
           <div class="ez-template-empty-icon">📝</div>
@@ -89,6 +93,14 @@ class TemplateUI {
               ? 'Try adjusting your search or filter' 
               : 'Create your first template to get started'}
           </div>
+          ${hasNoTemplates && prebuiltCount > 0 ? `
+            <button class="ez-template-load-samples-btn" id="ez-load-samples">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+              </svg>
+              Load ${prebuiltCount} Sample Templates
+            </button>
+          ` : ''}
         </div>
       `;
     }
@@ -166,6 +178,12 @@ class TemplateUI {
       if (templateItem) {
         const templateId = templateItem.dataset.templateId;
         this.selectTemplate(templateId);
+      }
+      
+      // Load samples button
+      const loadSamplesBtn = e.target.closest('#ez-load-samples');
+      if (loadSamplesBtn) {
+        this.loadSampleTemplates();
       }
     });
   }
@@ -349,20 +367,23 @@ class TemplateUI {
         </div>
         
         <div class="ez-variable-modal-body">
-          ${template.variables.map(variable => `
-            <div class="ez-variable-input-group">
-              <label class="ez-variable-label" for="var-${variable}">
-                ${this.formatVariableName(variable)}
-              </label>
-              <input 
-                type="text" 
-                class="ez-variable-input" 
-                id="var-${variable}"
-                data-variable="${variable}"
-                placeholder="Enter ${variable}..."
-              />
-            </div>
-          `).join('')}
+          ${template.variables.map(variable => {
+            const isDate = this.isDateVariable(variable);
+            return `
+              <div class="ez-variable-input-group">
+                <label class="ez-variable-label" for="var-${variable}">
+                  ${this.formatVariableName(variable)}
+                </label>
+                <input 
+                  type="${isDate ? 'date' : 'text'}" 
+                  class="ez-variable-input" 
+                  id="var-${variable}"
+                  data-variable="${variable}"
+                  placeholder="${isDate ? '' : 'Enter ' + variable + '...'}"
+                />
+              </div>
+            `;
+          }).join('')}
         </div>
         
         <div class="ez-variable-modal-footer">
@@ -414,10 +435,28 @@ class TemplateUI {
     
     inputs.forEach(input => {
       const variable = input.dataset.variable;
-      values[variable] = input.value;
+      let value = input.value;
+      
+      // Format date values nicely
+      if (input.type === 'date' && value) {
+        value = this.formatDateValue(value);
+      }
+      
+      values[variable] = value;
     });
     
     return values;
+  }
+
+  // Format date value from YYYY-MM-DD to readable format
+  formatDateValue(dateString) {
+    try {
+      const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+      return dateString; // Return original if formatting fails
+    }
   }
 
   // Insert template with values
@@ -458,6 +497,23 @@ class TemplateUI {
     this.selectedCategory = 'all';
   }
 
+  // Check if variable is date-related
+  isDateVariable(variable) {
+    const dateKeywords = [
+      'date', 'Date',
+      'day', 'Day',
+      'deadline', 'Deadline',
+      'start', 'Start',
+      'end', 'End',
+      'return', 'Return',
+      'due', 'Due',
+      'expiration', 'Expiration',
+      'followup', 'followUp', 'FollowUp'
+    ];
+    
+    return dateKeywords.some(keyword => variable.toLowerCase().includes(keyword.toLowerCase()));
+  }
+
   // Format variable name for display
   formatVariableName(variable) {
     // Convert camelCase or snake_case to Title Case
@@ -473,6 +529,26 @@ class TemplateUI {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // Load sample templates
+  async loadSampleTemplates() {
+    try {
+      const count = await this.templateManager.importPrebuiltTemplates('all');
+      
+      if (count > 0) {
+        this.showNotification(`Successfully loaded ${count} sample templates!`, 'success');
+        // Refresh the template list
+        this.filterAndRenderTemplates();
+      } else if (count === 0) {
+        this.showNotification('All sample templates are already loaded', 'success');
+      } else {
+        this.showNotification('Failed to load sample templates', 'error');
+      }
+    } catch (error) {
+      console.error('Ez Gmail: Error loading sample templates:', error);
+      this.showNotification('Error loading sample templates', 'error');
+    }
   }
 
   // Show notification
