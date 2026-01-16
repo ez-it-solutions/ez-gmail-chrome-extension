@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Templates - Ez Gmail</title>
+  <link rel="stylesheet" href="../css/templates.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      background: #f8f9fa;
+      color: #202124;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 400;
+      color: #202124;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 24px;
+      height: 40px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: #1765cc;
+      box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
+    }
+
+    .btn-secondary:hover {
+      background: #f8f9fa;
+    }
+
+    .content {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      min-height: 500px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      flex: 1;
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
+
+    .category-filter {
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      min-width: 180px;
+    }
+
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .template-card {
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-card:hover {
+      border-color: #1a73e8;
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .template-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .template-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 4px;
+    }
+
+    .template-category {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #e8f0fe;
+      color: #1a73e8;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .template-subject {
+      font-size: 14px;
+      color: #5f6368;
+      margin-bottom: 8px;
+    }
+
+    .template-preview {
+      font-size: 13px;
+      color: #80868b;
+      line-height: 1.5;
+      max-height: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .template-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .template-action-btn {
+      flex: 1;
+      padding: 8px 16px;
+      border: 1px solid #dadce0;
+      background: white;
+      color: #5f6368;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-action-btn:hover {
+      background: #f8f9fa;
+      border-color: #1a73e8;
+      color: #1a73e8;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-text {
+      font-size: 18px;
+      color: #5f6368;
+      margin-bottom: 8px;
+    }
+
+    .empty-subtext {
+      font-size: 14px;
+      color: #80868b;
+      margin-bottom: 24px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .stat-item {
+      flex: 1;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a73e8;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📧 Email Templates</h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary" id="loadSamplesBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Load Sample Templates
+        </button>
+        <button class="btn" id="createTemplateBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Create Template
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="stats" id="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="totalTemplates">0</div>
+          <div class="stat-label">Total Templates</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalCategories">0</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="storageUsed">0%</div>
+          <div class="stat-label">Storage Used</div>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Search templates..."
+        />
+        <select class="category-filter" id="categoryFilter">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
+
+      <div class="templates-grid" id="templatesGrid">
+        <!-- Templates will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/template-library.js"></script>
+  <script src="../js/template-manager.js"></script>
+  <script src="../js/templates-page.js"></script>
+</body>
+</html>
