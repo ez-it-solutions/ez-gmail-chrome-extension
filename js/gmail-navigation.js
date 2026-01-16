@@ -36,17 +36,50 @@ class GmailNavigation {
   
   // Estimate total pages (Gmail doesn't provide this directly)
   estimateTotalPages() {
-    // Try to find email count indicators
-    const countElement = document.querySelector('[data-tooltip*="of"]');
-    if (countElement) {
-      const text = countElement.textContent;
-      const match = text.match(/(\d+)[\s-]+(\d+)\s+of\s+(\d+)/);
-      if (match) {
-        const total = parseInt(match[3]);
-        const itemsPerPage = this.settings.navigation.itemsPerPage;
-        return Math.ceil(total / itemsPerPage);
+    // Try multiple selectors to find email count indicators
+    // Gmail shows "1-50 of 23,295" in the top right
+    const selectors = [
+      '.Dj',  // Gmail's count display - direct selector
+      '[gh="tm"] .Dj',  // Toolbar count area
+      '.aeH .Dj',  // Alternative toolbar
+      'div[role="navigation"] .Dj',  // Navigation area
+      '[data-tooltip*="of"]',
+    ];
+    
+    for (const selector of selectors) {
+      const countElement = document.querySelector(selector);
+      if (countElement) {
+        const text = countElement.textContent || countElement.innerText;
+        // Match patterns like "1-50 of 23,295" or "1–50 of 23,295"
+        const match = text.match(/(\d+)[\s\-–]+(\d+)\s+of\s+([\d,]+)/);
+        if (match) {
+          // Remove commas from total count
+          const total = parseInt(match[3].replace(/,/g, ''));
+          const itemsPerPage = this.settings.navigation.itemsPerPage || 50;
+          const totalPages = Math.ceil(total / itemsPerPage);
+          console.log(`Ez Gmail: Found ${total} total emails, calculated ${totalPages} pages`);
+          return totalPages;
+        }
       }
     }
+    
+    // Fallback: try to find any element with the count pattern
+    const allElements = document.querySelectorAll('div, span');
+    for (const element of allElements) {
+      const text = element.textContent || element.innerText;
+      if (text && text.length < 50) {  // Avoid large text blocks
+        const match = text.match(/^(\d+)[\s\-–]+(\d+)\s+of\s+([\d,]+)$/);
+        if (match) {
+          const total = parseInt(match[3].replace(/,/g, ''));
+          const itemsPerPage = this.settings.navigation.itemsPerPage || 50;
+          const totalPages = Math.ceil(total / itemsPerPage);
+          console.log(`Ez Gmail: Found ${total} total emails (fallback), calculated ${totalPages} pages`);
+          return totalPages;
+        }
+      }
+    }
+    
+    console.log('Ez Gmail: Could not determine total pages');
     return null;
   }
   
@@ -113,7 +146,38 @@ class GmailNavigation {
   searchByDate(date, mode = 'single') {
     let searchQuery;
     
-    if (mode === 'single') {
+    // Check if date is a month object from getRelativeDate
+    if (date && typeof date === 'object' && date.type === 'month') {
+      // Search entire month
+      const monthDate = date.date;
+      const year = monthDate.getFullYear();
+      const month = monthDate.getMonth();
+      
+      // First day of month
+      const firstDay = new Date(year, month, 1);
+      // First day of next month
+      const lastDay = new Date(year, month + 1, 1);
+      
+      const afterStr = this.formatDateForSearch(firstDay);
+      const beforeStr = this.formatDateForSearch(lastDay);
+      
+      searchQuery = `after:${afterStr} before:${beforeStr}`;
+    } else if (mode === 'month') {
+      // Month search from month/year picker
+      const targetDate = this.parseDateString(date);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+      
+      // First day of month
+      const firstDay = new Date(year, month, 1);
+      // First day of next month
+      const lastDay = new Date(year, month + 1, 1);
+      
+      const afterStr = this.formatDateForSearch(firstDay);
+      const beforeStr = this.formatDateForSearch(lastDay);
+      
+      searchQuery = `after:${afterStr} before:${beforeStr}`;
+    } else if (mode === 'single') {
       // Single day search - search for emails ON this specific date
       // Gmail uses: after:DATE before:DATE+1 to get emails on DATE
       // Parse date string to avoid timezone issues
@@ -284,12 +348,20 @@ class GmailNavigation {
         pages.push(i);
       }
       
+      // Instead of showing the last page number (which >> does),
+      // show a forward jump page (current + 10)
       if (end < max) {
         if (end < max - 1) pages.push('...');
-        pages.push(max);
+        // Show a forward jump instead of last page
+        const forwardJump = Math.min(current + 10, max);
+        if (forwardJump > end && forwardJump < max) {
+          pages.push(forwardJump);
+        }
       }
     } else if (style === 'compact') {
-      pages = [1, '...', current - 1, current, current + 1, '...', max];
+      // Show: 1, ..., current-1, current, current+1, ..., current+10
+      const forwardJump = Math.min(current + 10, max);
+      pages = [1, '...', current - 1, current, current + 1, '...', forwardJump];
       pages = pages.filter((p, i, arr) => {
         if (typeof p === 'number') {
           return p >= 1 && p <= max && arr.indexOf(p) === i;
@@ -411,15 +483,43 @@ class GmailNavigation {
           <div class="ez-divider">OR</div>
           ` : ''}
           <div class="ez-date-picker">
-            <label>Select Date:</label>
-            <input type="date" id="ez-date-input" />
-            <select id="ez-date-mode">
-              <option value="single">Emails on this date</option>
-              <option value="after">Emails from this date onwards</option>
-              <option value="before">Emails before this date</option>
-            </select>
-            <button class="ez-nav-btn-primary" id="ez-date-search-btn">Search</button>
+            <label>Select Specific Date:</label>
+            <div class="ez-date-input-row">
+              <input type="date" id="ez-date-input" />
+              <select id="ez-date-mode">
+                <option value="single">Emails on this date</option>
+                <option value="after">Emails from this date onwards</option>
+                <option value="before">Emails before this date</option>
+              </select>
+            </div>
           </div>
+          <button class="ez-nav-btn-primary ez-search-btn-full" id="ez-date-search-btn">Search</button>
+          
+          <div class="ez-divider">OR</div>
+          
+          <div class="ez-month-picker">
+            <label>Select Month & Year:</label>
+            <div class="ez-month-input-row">
+              <select id="ez-month-select">
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+              </select>
+              <select id="ez-year-select">
+                <!-- Years will be populated dynamically -->
+              </select>
+            </div>
+          </div>
+          <button class="ez-nav-btn-primary ez-search-btn-full" id="ez-month-search-btn">Search Month</button>
         </div>
       </div>
     `;
@@ -454,6 +554,32 @@ class GmailNavigation {
         modal.remove();
       }
     });
+    
+    // Populate year dropdown (last 10 years)
+    const yearSelect = document.getElementById('ez-year-select');
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= currentYear - 10; year--) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearSelect.appendChild(option);
+    }
+    
+    // Set current month and year as default
+    const today = new Date();
+    document.getElementById('ez-month-select').value = today.getMonth();
+    document.getElementById('ez-year-select').value = today.getFullYear();
+    
+    // Month search
+    document.getElementById('ez-month-search-btn').addEventListener('click', () => {
+      const month = parseInt(document.getElementById('ez-month-select').value);
+      const year = parseInt(document.getElementById('ez-year-select').value);
+      
+      // Create a date for the first day of the selected month
+      const monthDate = new Date(year, month, 1);
+      this.searchByDate(monthDate, 'month');
+      modal.remove();
+    });
   }
   
   // Get relative date
@@ -471,8 +597,10 @@ class GmailNavigation {
         date.setDate(date.getDate() - 7);
         return date;
       case 'month':
-        date.setMonth(date.getMonth() - 1);
-        return date;
+        // Return entire last month (first day to last day)
+        // This returns an object with start and end dates
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        return { type: 'month', date: lastMonth };
       case 'year':
         date.setFullYear(date.getFullYear() - 1);
         return date;
@@ -491,7 +619,7 @@ class GmailNavigation {
     // Force critical styles inline with highest priority
     nav.style.setProperty('display', 'block', 'important');
     nav.style.setProperty('visibility', 'visible', 'important');
-    nav.style.setProperty('position', 'relative', 'important');
+    // Don't set position to avoid creating stacking context that blocks Gmail dropdowns
     
     // Don't override opacity/transform during animation
     if (isLoaded) {
