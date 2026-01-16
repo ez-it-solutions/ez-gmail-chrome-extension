@@ -478,6 +478,126 @@ Wishing you continued success,
     }
   ],
 
+  // Signature Templates
+  signature: [
+    {
+      name: 'Professional Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Best regards,
+{{yourName}}
+{{yourTitle}}
+{{companyName}}
+
+📧 {{email}}
+📱 {{phone}}
+🌐 {{website}}`
+    },
+    {
+      name: 'Corporate Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Sincerely,
+
+{{yourName}}
+{{yourTitle}} | {{department}}
+{{companyName}}
+
+E: {{email}}
+P: {{phone}}
+W: {{website}}
+
+{{address}}
+{{city}}, {{state}} {{zip}}`
+    },
+    {
+      name: 'Tech Professional Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Thanks,
+{{yourName}}
+
+{{yourTitle}} @ {{companyName}}
+{{email}} | {{phone}}
+{{website}}
+
+Connect with me:
+LinkedIn: {{linkedIn}}
+GitHub: {{github}}`
+    },
+    {
+      name: 'Sales Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Best,
+
+{{yourName}}
+{{yourTitle}}
+{{companyName}}
+
+Let's connect!
+📞 {{phone}}
+📧 {{email}}
+📅 Schedule a call: {{calendarLink}}
+🌐 {{website}}`
+    },
+    {
+      name: 'Support Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Thank you,
+
+{{yourName}}
+{{supportTeam}} Team
+{{companyName}}
+
+Need help? Contact us:
+📧 {{supportEmail}}
+📞 {{supportPhone}}
+💬 Live Chat: {{chatLink}}
+📚 Help Center: {{helpCenterLink}}`
+    },
+    {
+      name: 'Executive Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Regards,
+
+{{yourName}}
+{{yourTitle}}
+{{companyName}}
+
+Office: {{officePhone}}
+Mobile: {{mobilePhone}}
+Email: {{email}}
+
+{{companyTagline}}`
+    },
+    {
+      name: 'Consultant Signature',
+      category: 'Signature',
+      subject: '',
+      body: `Best regards,
+
+{{yourName}}, {{credentials}}
+{{consultingTitle}}
+
+{{email}} | {{phone}}
+{{website}}
+
+Specializing in: {{specialization}}
+
+Book a consultation: {{bookingLink}}`
+    },
+    {
+      name: 'Minimal Signature',
+      category: 'Signature',
+      subject: '',
+      body: `{{yourName}}
+{{email}} | {{phone}}`
+    }
+  ],
+
   // Follow-up Templates
   followup: [
     {

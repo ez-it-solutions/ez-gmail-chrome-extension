@@ -5,7 +5,7 @@
 class TemplateManager {
   constructor() {
     this.templates = [];
-    this.categories = ['Work', 'Personal', 'Support', 'Sales', 'Follow-up', 'Other'];
+    this.categories = ['Work', 'Personal', 'Support', 'Sales', 'Follow-up', 'Signature', 'Other'];
     this.storageKey = 'ezgmail_templates';
     this.initialized = false;
   }

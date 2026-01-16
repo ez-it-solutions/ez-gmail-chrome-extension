@@ -42,6 +42,12 @@ class TemplateUI {
         <div class="ez-template-modal-header">
           <h2>Insert Email Template</h2>
           <div class="ez-template-header-actions">
+            <button class="ez-template-import-btn" title="Import Templates from JSON">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+              </svg>
+              Import
+            </button>
             <button class="ez-template-create-btn" title="Create New Template">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -84,21 +90,35 @@ class TemplateUI {
       const hasNoTemplates = this.templateManager.getAllTemplates().length === 0;
       const prebuiltCount = this.templateManager.getPrebuiltCount('all');
       
+      // Check if filtering by category with no results
+      const categoryKey = this.selectedCategory.toLowerCase();
+      const categoryPrebuiltCount = this.templateManager.getPrebuiltCount(categoryKey);
+      const isFilteredCategory = this.selectedCategory !== 'all' && categoryPrebuiltCount > 0;
+      
       return `
         <div class="ez-template-empty">
           <div class="ez-template-empty-icon">📝</div>
           <div class="ez-template-empty-text">No templates found</div>
           <div class="ez-template-empty-subtext">
-            ${this.searchQuery || this.selectedCategory !== 'all' 
-              ? 'Try adjusting your search or filter' 
-              : 'Create your first template to get started'}
+            ${this.searchQuery 
+              ? 'Try adjusting your search' 
+              : isFilteredCategory
+                ? `No ${this.selectedCategory} templates yet`
+                : 'Create your first template to get started'}
           </div>
           ${hasNoTemplates && prebuiltCount > 0 ? `
-            <button class="ez-template-load-samples-btn" id="ez-load-samples">
+            <button class="ez-template-load-samples-btn" id="ez-load-samples" data-category="all">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
               </svg>
               Load ${prebuiltCount} Sample Templates
+            </button>
+          ` : isFilteredCategory ? `
+            <button class="ez-template-load-samples-btn" id="ez-load-category" data-category="${categoryKey}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+              </svg>
+              Load ${categoryPrebuiltCount} ${this.selectedCategory} Template${categoryPrebuiltCount !== 1 ? 's' : ''}
             </button>
           ` : ''}
         </div>
@@ -135,6 +155,10 @@ class TemplateUI {
 
   // Setup template picker event listeners
   setupTemplatePickerEvents(modal) {
+    // Import Templates button
+    const importBtn = modal.querySelector('.ez-template-import-btn');
+    importBtn.addEventListener('click', () => this.showImportModal());
+    
     // Create Template button
     const createBtn = modal.querySelector('.ez-template-create-btn');
     createBtn.addEventListener('click', () => this.showCreateTemplateModal());
@@ -180,10 +204,18 @@ class TemplateUI {
         this.selectTemplate(templateId);
       }
       
-      // Load samples button
+      // Load all samples button
       const loadSamplesBtn = e.target.closest('#ez-load-samples');
       if (loadSamplesBtn) {
-        this.loadSampleTemplates();
+        const category = loadSamplesBtn.dataset.category || 'all';
+        this.loadSampleTemplates(category);
+      }
+      
+      // Load category samples button
+      const loadCategoryBtn = e.target.closest('#ez-load-category');
+      if (loadCategoryBtn) {
+        const category = loadCategoryBtn.dataset.category;
+        this.loadSampleTemplates(category);
       }
     });
   }
@@ -223,6 +255,51 @@ class TemplateUI {
       // No variables, insert directly
       await this.insertTemplate(template, {});
     }
+  }
+
+  // Show import templates modal
+  showImportModal() {
+    // Create file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,application/json';
+    fileInput.style.display = 'none';
+    
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        
+        // Validate format
+        if (!Array.isArray(imported)) {
+          this.showNotification('Invalid file format. Expected JSON array of templates.', 'error');
+          return;
+        }
+        
+        // Import templates
+        const success = await this.templateManager.importTemplates(text, true);
+        
+        if (success) {
+          this.showNotification(`Successfully imported ${imported.length} template(s)!`, 'success');
+          this.filterAndRenderTemplates();
+        } else {
+          this.showNotification('Failed to import templates', 'error');
+        }
+      } catch (error) {
+        console.error('Ez Gmail: Error importing templates:', error);
+        this.showNotification('Error reading file. Please check the file format.', 'error');
+      }
+      
+      // Clean up
+      fileInput.remove();
+    });
+    
+    // Trigger file picker
+    document.body.appendChild(fileInput);
+    fileInput.click();
   }
 
   // Show create template modal
@@ -537,22 +614,23 @@ class TemplateUI {
   }
 
   // Load sample templates
-  async loadSampleTemplates() {
+  async loadSampleTemplates(category = 'all') {
     try {
-      const count = await this.templateManager.importPrebuiltTemplates('all');
+      const count = await this.templateManager.importPrebuiltTemplates(category);
       
       if (count > 0) {
-        this.showNotification(`Successfully loaded ${count} sample templates!`, 'success');
+        const categoryName = category === 'all' ? 'sample' : category;
+        this.showNotification(`Successfully loaded ${count} ${categoryName} template${count !== 1 ? 's' : ''}!`, 'success');
         // Refresh the template list
         this.filterAndRenderTemplates();
       } else if (count === 0) {
-        this.showNotification('All sample templates are already loaded', 'success');
+        this.showNotification('All templates from this category are already loaded', 'success');
       } else {
-        this.showNotification('Failed to load sample templates', 'error');
+        this.showNotification('Failed to load templates', 'error');
       }
     } catch (error) {
       console.error('Ez Gmail: Error loading sample templates:', error);
-      this.showNotification('Error loading sample templates', 'error');
+      this.showNotification('Error loading templates', 'error');
     }
   }
 

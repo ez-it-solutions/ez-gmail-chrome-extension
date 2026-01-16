@@ -116,6 +116,7 @@
   gap: 12px !important;
 }
 
+.ez-template-import-btn,
 .ez-template-create-btn {
   display: inline-flex !important;
   align-items: center !important;
@@ -135,15 +136,18 @@
   letter-spacing: 0.25px !important;
 }
 
+.ez-template-import-btn:hover,
 .ez-template-create-btn:hover {
   background: #1765cc !important;
   box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15) !important;
 }
 
+.ez-template-import-btn:active,
 .ez-template-create-btn:active {
   background: #174ea6 !important;
 }
 
+.ez-template-import-btn svg,
 .ez-template-create-btn svg {
   width: 18px !important;
   height: 18px !important;
