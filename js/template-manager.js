@@ -49,11 +49,26 @@ class TemplateManager {
   // Save templates to Chrome storage
   async saveTemplates() {
     try {
+      // Check storage size before saving
+      const dataSize = JSON.stringify(this.templates).length;
+      const maxSize = chrome.storage.sync.QUOTA_BYTES_PER_ITEM || 8192;
+      
+      if (dataSize > maxSize) {
+        console.error('Ez Gmail: Storage quota exceeded. Data size:', dataSize, 'Max:', maxSize);
+        throw new Error('Storage quota exceeded. Please delete some templates.');
+      }
+      
       await chrome.storage.sync.set({ [this.storageKey]: this.templates });
-      console.log('Ez Gmail: Templates saved successfully');
+      console.log('Ez Gmail: Templates saved successfully. Size:', dataSize, 'bytes');
       return true;
     } catch (error) {
       console.error('Ez Gmail: Error saving templates:', error);
+      
+      // Show user-friendly error
+      if (error.message && error.message.includes('quota')) {
+        alert('Ez Gmail: Storage limit reached!\n\nYou have too many templates. Please delete some templates to free up space.');
+      }
+      
       return false;
     }
   }
@@ -339,6 +354,28 @@ class TemplateManager {
     }
 
     return TEMPLATE_LIBRARY[category] ? TEMPLATE_LIBRARY[category].length : 0;
+  }
+
+  // Get storage usage information
+  getStorageUsage() {
+    const dataSize = JSON.stringify(this.templates).length;
+    const maxSize = chrome.storage.sync.QUOTA_BYTES_PER_ITEM || 8192;
+    const percentUsed = Math.round((dataSize / maxSize) * 100);
+    
+    return {
+      used: dataSize,
+      max: maxSize,
+      available: maxSize - dataSize,
+      percentUsed: percentUsed,
+      isNearLimit: percentUsed > 80,
+      isAtLimit: percentUsed > 95
+    };
+  }
+
+  // Check if storage is near limit
+  isStorageNearLimit() {
+    const usage = this.getStorageUsage();
+    return usage.isNearLimit;
   }
 
   // Duplicate template

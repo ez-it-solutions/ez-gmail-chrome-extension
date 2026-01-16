@@ -321,21 +321,26 @@ class TemplateUI {
       }
       
       // Create template
-      const template = await this.templateManager.createTemplate({
-        name,
-        category,
-        subject,
-        body
-      });
-      
-      if (template) {
-        this.showNotification(`Template "${name}" created successfully!`, 'success');
-        modal.remove();
+      try {
+        const template = await this.templateManager.createTemplate({
+          name,
+          category,
+          subject,
+          body
+        });
         
-        // Refresh template list
-        this.filterAndRenderTemplates();
-      } else {
-        this.showNotification('Failed to create template', 'error');
+        if (template) {
+          this.showNotification(`Template "${name}" created successfully!`, 'success');
+          modal.remove();
+          
+          // Refresh template list
+          this.filterAndRenderTemplates();
+        } else {
+          this.showNotification('Failed to create template. Storage may be full.', 'error');
+        }
+      } catch (error) {
+        console.error('Ez Gmail: Error creating template:', error);
+        this.showNotification('Error creating template. Please try again.', 'error');
       }
     });
     
