@@ -3,7 +3,54 @@
  * Styles for advanced page and date navigation
  */
 
+/* Critical: Remove any Gmail pseudo-elements that interfere with our layout */
+#ez-gmail-navigation::before,
+#ez-gmail-navigation::after,
+#ez-gmail-navigation *::before,
+#ez-gmail-navigation *::after,
+div[data-ez-gmail="true"]::before,
+div[data-ez-gmail="true"]::after,
+div[data-ez-gmail="true"] *::before,
+div[data-ez-gmail="true"] *::after {
+  content: none !important;
+  display: none !important;
+}
+
 /* Navigation Bar */
+#ez-gmail-navigation.ez-gmail-nav-bar {
+  background: #f5f5f5 !important;
+  border-bottom: 1px solid #dadce0 !important;
+  padding: 8px 16px !important;
+  box-shadow: none !important;
+  z-index: 100 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  
+  /* Initial state for animation */
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transform: translateY(-10px) !important;
+  box-shadow: none !important;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease-out,
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease-out !important;
+}
+
+/* Animated state - applied after insertion */
+#ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-loaded {
+  max-height: 200px !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
 .ez-gmail-nav-bar {
   background: #f5f5f5 !important;
   border-bottom: 1px solid #dadce0 !important;
@@ -16,6 +63,23 @@
   box-sizing: border-box !important;
 }
 
+/* Ultra-specific container rules with maximum priority */
+div[data-ez-gmail="true"][id="ez-gmail-navigation"] .ez-nav-container {
+  all: revert !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+div[data-ez-gmail="true"] .ez-nav-container,
+#ez-gmail-navigation .ez-nav-container,
+.ez-gmail-nav-bar .ez-nav-container,
 .ez-nav-container {
   display: flex !important;
   align-items: center !important;
@@ -24,8 +88,12 @@
   max-width: 100% !important;
   margin: 0 !important;
   flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  box-sizing: border-box !important;
 }
 
+#ez-gmail-navigation .ez-nav-left,
+.ez-gmail-nav-bar .ez-nav-left,
 .ez-nav-left {
   display: flex !important;
   align-items: center !important;
@@ -33,20 +101,27 @@
   flex: 1 !important;
   flex-wrap: wrap !important;
   flex-direction: row !important;
+  box-sizing: border-box !important;
 }
 
+#ez-gmail-navigation .ez-nav-right,
+.ez-gmail-nav-bar .ez-nav-right,
 .ez-nav-right {
   display: flex !important;
   align-items: center !important;
   margin-left: auto !important;
   flex-shrink: 0 !important;
+  box-sizing: border-box !important;
 }
 
+#ez-gmail-navigation .ez-nav-section,
+.ez-gmail-nav-bar .ez-nav-section,
 .ez-nav-section {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
   flex-direction: row !important;
+  box-sizing: border-box !important;
 }
 
 /* Navigation Buttons */
@@ -393,6 +468,10 @@
 body.darkmode .ez-gmail-nav-bar {
   background: #2d2e30 !important;
   border-bottom-color: #5f6368 !important;
+}
+
+body.darkmode #ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-loaded {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 body.darkmode .ez-nav-btn,

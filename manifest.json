@@ -43,7 +43,7 @@
         "css/gmail-enhancements.css",
         "css/gmail-navigation.css"
       ],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
