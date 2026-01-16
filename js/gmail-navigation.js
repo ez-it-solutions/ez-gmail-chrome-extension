@@ -34,6 +34,87 @@ class GmailNavigation {
     return 1;
   }
   
+  // Check if we're viewing an individual email (not a list view)
+  isViewingEmail() {
+    const hash = window.location.hash;
+    
+    // Method 1: Check URL pattern
+    // Individual email patterns:
+    // #inbox/FMfcgzQXJPqGLbBmKqTpTWNjvfpqWQvL (long ID = individual email)
+    // #sent/FMfcgzQXJPqGLbBmKqTpTWNjvfpqWQvL
+    // #label/Work/FMfcgzQXJPqGLbBmKqTpTWNjvfpqWQvL
+    
+    // List view patterns:
+    // #inbox
+    // #inbox/p2
+    // #sent
+    // #label/Work
+    // #search/query
+    
+    // If hash contains a long alphanumeric ID (16+ chars) that's NOT a page number
+    const emailIdPattern = /\/[a-zA-Z0-9_-]{16,}/;
+    const pagePattern = /\/p\d+/;
+    
+    // Check if it's a page number (list view)
+    if (pagePattern.test(hash)) {
+      return false;
+    }
+    
+    // Check if URL has email ID pattern
+    if (emailIdPattern.test(hash)) {
+      return true;
+    }
+    
+    // Method 2: Check for email content area in DOM
+    // Gmail shows email content in a specific container when viewing an email
+    const emailContentArea = document.querySelector('[role="main"] .nH.aHU') || // Email view container
+                             document.querySelector('.nH.aHU') || // Alternative selector
+                             document.querySelector('[data-message-id]'); // Message container
+    
+    // Method 3: Check if email list is hidden
+    const emailList = document.querySelector('.AO') || document.querySelector('[role="main"] table');
+    const isListHidden = emailList && window.getComputedStyle(emailList).display === 'none';
+    
+    // If we have email content area OR email list is hidden, we're viewing an email
+    return !!(emailContentArea || isListHidden);
+  }
+  
+  // Update navigation visibility based on current view
+  updateNavigationVisibility() {
+    const nav = this.navigationBar || document.getElementById('ez-gmail-navigation');
+    if (!nav) {
+      console.log('Ez Gmail: Navigation bar not found, cannot update visibility');
+      return;
+    }
+    
+    const isEmail = this.isViewingEmail();
+    const hash = window.location.hash;
+    
+    console.log('Ez Gmail: Visibility check:', {
+      hash: hash,
+      isEmail: isEmail,
+      hasHidingClass: nav.classList.contains('ez-nav-hiding')
+    });
+    
+    if (isEmail) {
+      // Hide navigation with smooth animation when viewing individual email
+      nav.classList.add('ez-nav-hiding');
+      console.log('Ez Gmail: ✓ Hiding navigation with animation (viewing email)');
+      
+      // After animation completes (400ms), set display none to remove from layout
+      setTimeout(() => {
+        if (nav.classList.contains('ez-nav-hiding')) {
+          nav.style.setProperty('display', 'none', 'important');
+        }
+      }, 400);
+    } else {
+      // Show navigation with smooth animation when in list view
+      nav.classList.remove('ez-nav-hiding');
+      nav.style.setProperty('display', 'block', 'important');
+      console.log('Ez Gmail: ✓ Showing navigation with animation (list view)');
+    }
+  }
+  
   // Estimate total pages (Gmail doesn't provide this directly)
   estimateTotalPages() {
     // Try multiple selectors to find email count indicators
@@ -616,13 +697,20 @@ class GmailNavigation {
     // Check if animation has completed
     const isLoaded = nav.classList.contains('ez-nav-loaded');
     
+    // Check if we're currently hiding the nav (viewing email)
+    const isHiding = nav.classList.contains('ez-nav-hiding');
+    const isHidden = nav.style.display === 'none';
+    
     // Force critical styles inline with highest priority
-    nav.style.setProperty('display', 'block', 'important');
-    nav.style.setProperty('visibility', 'visible', 'important');
+    // BUT respect visibility state - don't override if we're intentionally hiding
+    if (!isHiding && !isHidden) {
+      nav.style.setProperty('display', 'block', 'important');
+      nav.style.setProperty('visibility', 'visible', 'important');
+    }
     // Don't set position to avoid creating stacking context that blocks Gmail dropdowns
     
     // Don't override opacity/transform during animation
-    if (isLoaded) {
+    if (isLoaded && !isHiding && !isHidden) {
       nav.style.setProperty('opacity', '1', 'important');
     }
     
@@ -835,6 +923,9 @@ class GmailNavigation {
       this.setupEventListeners();
       this.updateNavigationBar();
       
+      // Check visibility based on current view
+      this.updateNavigationVisibility();
+      
       // Verify layout is correct
       const container = nav.querySelector('.ez-nav-container');
       if (container) {
@@ -877,8 +968,57 @@ class GmailNavigation {
     // Re-initialize on Gmail navigation changes
     this.observeGmailChanges();
     
+    // Monitor URL changes to update visibility
+    this.monitorUrlChanges();
+    
     console.log('Ez Gmail: Navigation bar initialized successfully');
     this.isInitializing = false;
+  }
+  
+  // Monitor URL changes (Gmail is a SPA, so we watch hash changes)
+  monitorUrlChanges() {
+    // Prevent duplicate event listeners
+    if (this.urlMonitoringActive) {
+      console.log('Ez Gmail: URL monitoring already active');
+      return;
+    }
+    this.urlMonitoringActive = true;
+    
+    // Watch for hash changes
+    window.addEventListener('hashchange', () => {
+      console.log('Ez Gmail: Hash changed -', window.location.hash);
+      // Small delay to let Gmail update the DOM
+      setTimeout(() => {
+        this.updateNavigationVisibility();
+        this.updateNavigationBar();
+      }, 100);
+    });
+    
+    // Also watch for history state changes (Gmail uses pushState)
+    const self = this;
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function() {
+      originalPushState.apply(history, arguments);
+      window.dispatchEvent(new Event('urlchange'));
+    };
+    
+    history.replaceState = function() {
+      originalReplaceState.apply(history, arguments);
+      window.dispatchEvent(new Event('urlchange'));
+    };
+    
+    window.addEventListener('urlchange', () => {
+      console.log('Ez Gmail: URL changed (pushState) -', window.location.hash);
+      // Small delay to let Gmail update the DOM
+      setTimeout(() => {
+        self.updateNavigationVisibility();
+        self.updateNavigationBar();
+      }, 100);
+    });
+    
+    console.log('Ez Gmail: URL monitoring initialized');
   }
   
   // Observe Gmail DOM changes to reinitialize if needed

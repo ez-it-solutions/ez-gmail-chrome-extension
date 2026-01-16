@@ -51,6 +51,18 @@ div[data-ez-gmail="true"] *::after {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Hiding animation - applied when viewing email */
+#ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-hiding {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  transform: translateY(-10px) !important;
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
 .ez-gmail-nav-bar {
   background: #f5f5f5 !important;
   border-bottom: 1px solid #dadce0 !important;
@@ -535,6 +547,10 @@ body.darkmode .ez-gmail-nav-bar {
 
 body.darkmode #ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-loaded {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.darkmode #ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-hiding {
+  box-shadow: none !important;
 }
 
 body.darkmode .ez-nav-btn,
