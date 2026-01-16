@@ -38,6 +38,7 @@
         "js/settings.js",
         "js/template-library.js",
         "js/template-manager.js",
+        "js/profile-manager.js",
         "js/template-ui.js",
         "js/compose-integration.js",
         "js/gmail-navigation.js",

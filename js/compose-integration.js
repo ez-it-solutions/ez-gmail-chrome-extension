@@ -314,27 +314,9 @@ class ComposeIntegration {
   }
 }
 
-// Initialize when template UI is ready
-let composeIntegration = null;
+// Note: Initialization is now handled by content.js
+console.log('Ez Gmail: Compose integration script loaded');
 
-const initComposeIntegration = () => {
-  if (window.ezGmailTemplateUI && !composeIntegration) {
-    composeIntegration = new ComposeIntegration(window.ezGmailTemplateUI);
-    composeIntegration.init();
-  } else if (!window.ezGmailTemplateUI) {
-    // Retry after a short delay
-    setTimeout(initComposeIntegration, 500);
-  }
-};
-
-// Start initialization
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initComposeIntegration);
-} else {
-  initComposeIntegration();
-}
-
-// Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = ComposeIntegration;
 }

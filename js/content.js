@@ -7,14 +7,51 @@ console.log("Ez Gmail content script loaded");
 // Load settings and initialize
 let settings = null;
 let gmailNavigation = null;
+let templateManager = null;
+let profileManager = null;
+let templateUI = null;
+let composeIntegration = null;
 
 async function initializeExtension() {
-  // Load settings
-  const settingsManager = new SettingsManager();
-  await settingsManager.init();
-  settings = settingsManager.getAll();
-  
-  console.log("Ez Gmail settings loaded:", settings);
+  try {
+    // Load settings
+    const settingsManager = new SettingsManager();
+    await settingsManager.init();
+    settings = settingsManager.getAll();
+    
+    console.log("Ez Gmail settings loaded:", settings);
+    
+    // Initialize template system
+    if (typeof TemplateManager !== 'undefined') {
+      templateManager = window.EzGmailTemplateManager || new TemplateManager();
+      await templateManager.init();
+      console.log("Ez Gmail: Template Manager initialized");
+    } else {
+      console.error("Ez Gmail: TemplateManager class not found");
+    }
+    
+    // Initialize profile system
+    if (typeof ProfileManager !== 'undefined') {
+      profileManager = window.EzGmailProfileManager || new ProfileManager();
+      await profileManager.init();
+      console.log("Ez Gmail: Profile Manager initialized");
+    } else {
+      console.warn("Ez Gmail: ProfileManager class not found - profiles will be disabled");
+    }
+    
+    // Initialize template UI
+    if (templateManager) {
+      templateUI = new TemplateUI(templateManager, profileManager);
+      
+      // Initialize compose integration
+      composeIntegration = new ComposeIntegration(templateUI);
+      composeIntegration.init();
+      
+      console.log("Ez Gmail template system initialized");
+    }
+  } catch (error) {
+    console.error("Ez Gmail: Error initializing template system:", error);
+  }
   
   // Initialize navigation system
   if (settings.navigation.enabled) {

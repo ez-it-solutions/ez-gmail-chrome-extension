@@ -3,8 +3,9 @@
 // UI components for template picker and variable input
 
 class TemplateUI {
-  constructor(templateManager) {
+  constructor(templateManager, profileManager) {
     this.templateManager = templateManager;
+    this.profileManager = profileManager;
     this.currentModal = null;
     this.currentTemplate = null;
     this.onInsertCallback = null;
@@ -442,10 +443,30 @@ class TemplateUI {
     modal.className = 'ez-variable-modal';
     modal.id = 'ez-variable-modal';
     
+    // Get profiles for selector (if profile manager is available)
+    const profiles = this.profileManager ? this.profileManager.getAllProfiles() : [];
+    const activeProfile = this.profileManager ? this.profileManager.getActiveProfile() : null;
+    
     modal.innerHTML = `
       <div class="ez-variable-modal-content">
         <div class="ez-variable-modal-header">
           <h3>Fill in Template Variables</h3>
+          <div class="ez-profile-selector-container">
+            <label for="ez-profile-select">Profile:</label>
+            <select id="ez-profile-select" class="ez-profile-select">
+              <option value="">None (Enter manually)</option>
+              ${profiles.map(p => `
+                <option value="${p.id}" ${activeProfile?.id === p.id ? 'selected' : ''}>
+                  ${this.escapeHtml(p.name)}
+                </option>
+              `).join('')}
+            </select>
+            <button class="ez-profile-manage-btn" title="Manage Profiles">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+              </svg>
+            </button>
+          </div>
         </div>
         
         <div class="ez-variable-modal-body">
@@ -469,8 +490,16 @@ class TemplateUI {
         </div>
         
         <div class="ez-variable-modal-footer">
-          <button class="ez-variable-btn ez-variable-btn-cancel">Cancel</button>
-          <button class="ez-variable-btn ez-variable-btn-insert">Insert Template</button>
+          <button class="ez-variable-btn ez-variable-btn-save-profile" title="Save these values as a profile">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+            </svg>
+            Save as Profile
+          </button>
+          <div class="ez-variable-modal-footer-right">
+            <button class="ez-variable-btn ez-variable-btn-cancel">Cancel</button>
+            <button class="ez-variable-btn ez-variable-btn-insert">Insert Template</button>
+          </div>
         </div>
       </div>
     `;
@@ -480,6 +509,40 @@ class TemplateUI {
 
   // Setup variable modal event listeners
   setupVariableModalEvents(modal, template) {
+    // Profile selector change
+    const profileSelect = modal.querySelector('#ez-profile-select');
+    if (profileSelect && this.profileManager) {
+      profileSelect.addEventListener('change', (e) => {
+        const profileId = e.target.value;
+        if (profileId) {
+          this.fillVariablesFromProfile(modal, profileId);
+        }
+      });
+      
+      // Auto-fill from active profile on load
+      const activeProfile = this.profileManager.getActiveProfile();
+      if (activeProfile) {
+        this.fillVariablesFromProfile(modal, activeProfile.id);
+      }
+    }
+    
+    // Manage profiles button
+    const manageBtn = modal.querySelector('.ez-profile-manage-btn');
+    if (manageBtn && this.profileManager) {
+      manageBtn.addEventListener('click', () => {
+        this.showProfileManagementModal();
+      });
+    }
+    
+    // Save as Profile button
+    const saveProfileBtn = modal.querySelector('.ez-variable-btn-save-profile');
+    if (saveProfileBtn && this.profileManager) {
+      saveProfileBtn.addEventListener('click', () => {
+        const values = this.getVariableValues(modal);
+        this.showSaveProfileModal(values);
+      });
+    }
+    
     // Cancel button
     const cancelBtn = modal.querySelector('.ez-variable-btn-cancel');
     cancelBtn.addEventListener('click', () => {
@@ -490,14 +553,44 @@ class TemplateUI {
     const insertBtn = modal.querySelector('.ez-variable-btn-insert');
     insertBtn.addEventListener('click', async () => {
       const values = this.getVariableValues(modal);
+      
+      // Auto-save to "Default" profile if no profiles exist
+      if (this.profileManager && this.profileManager.getAllProfiles().length === 0) {
+        try {
+          await this.profileManager.createProfile({
+            name: 'Default',
+            variables: values,
+            isDefault: true
+          });
+          console.log('Ez Gmail: Auto-created Default profile');
+        } catch (error) {
+          console.error('Ez Gmail: Error auto-creating Default profile:', error);
+        }
+      }
+      
       await this.insertTemplate(template, values);
       modal.remove();
     });
     
     // Enter key to insert
     modal.addEventListener('keydown', async (e) => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
         const values = this.getVariableValues(modal);
+        
+        // Auto-save to "Default" profile if no profiles exist
+        if (this.profileManager && this.profileManager.getAllProfiles().length === 0) {
+          try {
+            await this.profileManager.createProfile({
+              name: 'Default',
+              variables: values,
+              isDefault: true
+            });
+            console.log('Ez Gmail: Auto-created Default profile');
+          } catch (error) {
+            console.error('Ez Gmail: Error auto-creating Default profile:', error);
+          }
+        }
+        
         await this.insertTemplate(template, values);
         modal.remove();
       }
@@ -632,6 +725,213 @@ class TemplateUI {
       console.error('Ez Gmail: Error loading sample templates:', error);
       this.showNotification('Error loading templates', 'error');
     }
+  }
+
+  // Fill variables from profile
+  fillVariablesFromProfile(modal, profileId) {
+    if (!this.profileManager) return;
+    
+    const profile = this.profileManager.getProfile(profileId);
+    if (!profile) return;
+    
+    const inputs = modal.querySelectorAll('.ez-variable-input');
+    inputs.forEach(input => {
+      const variable = input.dataset.variable;
+      if (profile.variables[variable]) {
+        input.value = profile.variables[variable];
+      }
+    });
+    
+    console.log('Ez Gmail: Filled variables from profile:', profile.name);
+  }
+
+  // Show save profile modal
+  showSaveProfileModal(variables) {
+    if (!this.profileManager) {
+      this.showNotification('Profile system not available', 'error');
+      return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'ez-variable-modal';
+    modal.id = 'ez-save-profile-modal';
+    
+    modal.innerHTML = `
+      <div class="ez-variable-modal-content" style="max-width: 500px;">
+        <div class="ez-variable-modal-header">
+          <h3>Save as Profile</h3>
+        </div>
+        
+        <div class="ez-variable-modal-body">
+          <div class="ez-variable-input-group">
+            <label class="ez-variable-label" for="profile-name">Profile Name</label>
+            <input 
+              type="text" 
+              class="ez-variable-input" 
+              id="profile-name" 
+              placeholder="e.g., Work, Personal, Consultant..."
+              required
+            />
+          </div>
+          <div class="ez-variable-input-group">
+            <label class="ez-variable-label">
+              <input type="checkbox" id="profile-set-default" />
+              Set as default profile
+            </label>
+          </div>
+        </div>
+        
+        <div class="ez-variable-modal-footer">
+          <button class="ez-variable-btn ez-variable-btn-cancel">Cancel</button>
+          <button class="ez-variable-btn ez-variable-btn-insert">Save Profile</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    const cancelBtn = modal.querySelector('.ez-variable-btn-cancel');
+    cancelBtn.addEventListener('click', () => modal.remove());
+    
+    const saveBtn = modal.querySelector('.ez-variable-btn-insert');
+    saveBtn.addEventListener('click', async () => {
+      const name = modal.querySelector('#profile-name').value.trim();
+      const isDefault = modal.querySelector('#profile-set-default').checked;
+      
+      if (!name) {
+        this.showNotification('Please enter a profile name', 'error');
+        return;
+      }
+      
+      try {
+        const profile = await this.profileManager.createProfile({
+          name,
+          variables,
+          isDefault
+        });
+        
+        if (profile) {
+          this.showNotification(`Profile "${name}" saved successfully!`, 'success');
+          modal.remove();
+          
+          // Set as active profile
+          await this.profileManager.setActiveProfile(profile.id);
+          
+          // Refresh the variable modal if it's open to update profile dropdown
+          const variableModal = document.getElementById('ez-variable-modal');
+          if (variableModal) {
+            // Close and reopen to refresh
+            const currentTemplate = this.currentTemplate;
+            if (currentTemplate) {
+              variableModal.remove();
+              this.showVariableModal(currentTemplate);
+            }
+          }
+        } else {
+          this.showNotification('Failed to save profile', 'error');
+        }
+      } catch (error) {
+        console.error('Ez Gmail: Error saving profile:', error);
+        this.showNotification('Error saving profile', 'error');
+      }
+    });
+    
+    // Focus name input
+    setTimeout(() => modal.querySelector('#profile-name').focus(), 100);
+  }
+
+  // Show profile management modal
+  showProfileManagementModal() {
+    if (!this.profileManager) {
+      this.showNotification('Profile system not available', 'error');
+      return;
+    }
+    
+    const profiles = this.profileManager.getAllProfiles();
+    const activeProfile = this.profileManager.getActiveProfile();
+    
+    const modal = document.createElement('div');
+    modal.className = 'ez-template-modal';
+    modal.id = 'ez-profile-management-modal';
+    
+    modal.innerHTML = `
+      <div class="ez-template-modal-content">
+        <div class="ez-template-modal-header">
+          <h2>Manage Profiles</h2>
+          <button class="ez-template-modal-close" aria-label="Close">&times;</button>
+        </div>
+        
+        <div class="ez-template-list" id="ez-profile-list">
+          ${profiles.length === 0 ? `
+            <div class="ez-template-empty">
+              <div class="ez-template-empty-icon">👤</div>
+              <div class="ez-template-empty-text">No profiles yet</div>
+              <div class="ez-template-empty-subtext">Create a profile to save your information</div>
+            </div>
+          ` : profiles.map(profile => `
+            <div class="ez-template-item" data-profile-id="${profile.id}">
+              <div class="ez-template-item-header">
+                <span class="ez-template-item-name">
+                  ${this.escapeHtml(profile.name)}
+                  ${profile.isDefault ? ' <span style="color: #1a73e8;">(Default)</span>' : ''}
+                  ${activeProfile?.id === profile.id ? ' <span style="color: #34a853;">●</span>' : ''}
+                </span>
+              </div>
+              <div class="ez-template-item-footer">
+                <span>${Object.keys(profile.variables).length} variables</span>
+                <div class="ez-template-item-actions">
+                  <button class="ez-template-action-btn ez-profile-set-active" data-profile-id="${profile.id}" title="Set as active">
+                    Use
+                  </button>
+                  <button class="ez-template-action-btn ez-profile-delete" data-profile-id="${profile.id}" title="Delete profile">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    const closeBtn = modal.querySelector('.ez-template-modal-close');
+    closeBtn.addEventListener('click', () => modal.remove());
+    
+    // Set active profile
+    modal.addEventListener('click', async (e) => {
+      const setActiveBtn = e.target.closest('.ez-profile-set-active');
+      if (setActiveBtn) {
+        const profileId = setActiveBtn.dataset.profileId;
+        await this.profileManager.setActiveProfile(profileId);
+        const profile = this.profileManager.getProfile(profileId);
+        this.showNotification(`Active profile set to "${profile.name}"`, 'success');
+        modal.remove();
+      }
+      
+      // Delete profile
+      const deleteBtn = e.target.closest('.ez-profile-delete');
+      if (deleteBtn) {
+        const profileId = deleteBtn.dataset.profileId;
+        const profile = this.profileManager.getProfile(profileId);
+        
+        if (confirm(`Delete profile "${profile.name}"?`)) {
+          await this.profileManager.deleteProfile(profileId);
+          this.showNotification(`Profile "${profile.name}" deleted`, 'success');
+          modal.remove();
+        }
+      }
+    });
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
   }
 
   // Show notification

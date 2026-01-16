@@ -42,29 +42,24 @@
   fill: currentColor !important;
 }
 
-/* Template Picker Modal */
+/* Template Modal */
 .ez-template-modal {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   background: rgba(0, 0, 0, 0.5) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 10001 !important;
+  z-index: 10000 !important;
   animation: ezFadeIn 0.2s ease-out !important;
-  padding: 20px !important;
 }
 
-@keyframes ezFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Profile Management Modal - Higher z-index */
+#ez-profile-management-modal {
+  z-index: 10002 !important;
 }
 
 .ez-template-modal-content {
@@ -578,4 +573,148 @@ body.darkmode .ez-variable-input[type="date"]::-webkit-calendar-picker-indicator
 
 body.darkmode .ez-variable-input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: #5f6368 !important;
+}
+
+/* Profile Selector */
+.ez-profile-selector-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+  padding: 12px !important;
+  background: #f8f9fa !important;
+  border-radius: 8px !important;
+}
+
+.ez-profile-selector-container label {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #5f6368 !important;
+  margin: 0 !important;
+}
+
+.ez-profile-select {
+  flex: 1 !important;
+  min-width: 200px !important;
+  padding: 8px 12px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-family: Roboto, Arial, sans-serif !important;
+  background: white !important;
+  color: #3c4043 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ez-profile-select:hover {
+  border-color: #1a73e8 !important;
+}
+
+.ez-profile-select:focus {
+  outline: none !important;
+  border-color: #1a73e8 !important;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1) !important;
+}
+
+.ez-profile-manage-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 6px !important;
+  background: white !important;
+  color: #5f6368 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ez-profile-manage-btn:hover {
+  background: #f1f3f4 !important;
+  border-color: #1a73e8 !important;
+  color: #1a73e8 !important;
+}
+
+.ez-profile-manage-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Save as Profile Button */
+.ez-variable-btn-save-profile {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 16px !important;
+  height: 36px !important;
+  background: white !important;
+  color: #1a73e8 !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 18px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ez-variable-btn-save-profile:hover {
+  background: #f8f9fa !important;
+  border-color: #1a73e8 !important;
+}
+
+.ez-variable-btn-save-profile svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.ez-variable-modal-footer-right {
+  display: flex !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+
+/* Dark Mode - Profile Components */
+body.darkmode .ez-profile-selector-container {
+  background: #2d2e30 !important;
+}
+
+body.darkmode .ez-profile-selector-container label {
+  color: #9aa0a6 !important;
+}
+
+body.darkmode .ez-profile-select {
+  background: #3c4043 !important;
+  color: #e8eaed !important;
+  border-color: #5f6368 !important;
+}
+
+body.darkmode .ez-profile-select:hover,
+body.darkmode .ez-profile-select:focus {
+  border-color: #8ab4f8 !important;
+}
+
+body.darkmode .ez-profile-manage-btn {
+  background: #3c4043 !important;
+  border-color: #5f6368 !important;
+  color: #9aa0a6 !important;
+}
+
+body.darkmode .ez-profile-manage-btn:hover {
+  background: #5f6368 !important;
+  border-color: #8ab4f8 !important;
+  color: #8ab4f8 !important;
+}
+
+body.darkmode .ez-variable-btn-save-profile {
+  background: #3c4043 !important;
+  color: #8ab4f8 !important;
+  border-color: #5f6368 !important;
+}
+
+body.darkmode .ez-variable-btn-save-profile:hover {
+  background: #5f6368 !important;
+  border-color: #8ab4f8 !important;
 }
