@@ -23,7 +23,7 @@ class TemplateManager {
   // Load templates from Chrome storage
   async loadTemplates() {
     try {
-      const result = await chrome.storage.sync.get(this.storageKey);
+      const result = await chrome.storage.local.get(this.storageKey);
       this.templates = result[this.storageKey] || [];
       
       // Ensure all templates have required fields
@@ -49,17 +49,17 @@ class TemplateManager {
   // Save templates to Chrome storage
   async saveTemplates() {
     try {
-      // Check storage size before saving
+      // Check storage size before saving (local storage has 5MB+ limit)
       const dataSize = JSON.stringify(this.templates).length;
-      const maxSize = chrome.storage.sync.QUOTA_BYTES_PER_ITEM || 8192;
+      const maxSize = 5 * 1024 * 1024; // 5MB limit for local storage
       
       if (dataSize > maxSize) {
         console.error('Ez Gmail: Storage quota exceeded. Data size:', dataSize, 'Max:', maxSize);
         throw new Error('Storage quota exceeded. Please delete some templates.');
       }
       
-      await chrome.storage.sync.set({ [this.storageKey]: this.templates });
-      console.log('Ez Gmail: Templates saved successfully. Size:', dataSize, 'bytes');
+      await chrome.storage.local.set({ [this.storageKey]: this.templates });
+      console.log('Ez Gmail: Templates saved successfully. Size:', dataSize, 'bytes (', Math.round(dataSize / 1024), 'KB )');
       return true;
     } catch (error) {
       console.error('Ez Gmail: Error saving templates:', error);
@@ -359,12 +359,14 @@ class TemplateManager {
   // Get storage usage information
   getStorageUsage() {
     const dataSize = JSON.stringify(this.templates).length;
-    const maxSize = chrome.storage.sync.QUOTA_BYTES_PER_ITEM || 8192;
+    const maxSize = 5 * 1024 * 1024; // 5MB for local storage
     const percentUsed = Math.round((dataSize / maxSize) * 100);
     
     return {
       used: dataSize,
+      usedKB: Math.round(dataSize / 1024),
       max: maxSize,
+      maxMB: Math.round(maxSize / 1024 / 1024),
       available: maxSize - dataSize,
       percentUsed: percentUsed,
       isNearLimit: percentUsed > 80,
