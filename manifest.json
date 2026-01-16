@@ -36,12 +36,16 @@
       "matches": ["https://mail.google.com/*"],
       "js": [
         "js/settings.js",
+        "js/template-manager.js",
+        "js/template-ui.js",
+        "js/compose-integration.js",
         "js/gmail-navigation.js",
         "js/content.js"
       ],
       "css": [
         "css/gmail-enhancements.css",
-        "css/gmail-navigation.css"
+        "css/gmail-navigation.css",
+        "css/templates.css"
       ],
       "run_at": "document_start"
     }
