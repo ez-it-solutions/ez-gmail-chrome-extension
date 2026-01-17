@@ -11,6 +11,7 @@ let templateManager = null;
 let profileManager = null;
 let templateUI = null;
 let composeIntegration = null;
+let settingsIntegration = null;
 
 async function initializeExtension() {
   try {
@@ -49,12 +50,19 @@ async function initializeExtension() {
       
       console.log("Ez Gmail template system initialized");
     }
+    
+    // Initialize settings integration
+    if (typeof SettingsIntegration !== 'undefined') {
+      settingsIntegration = new SettingsIntegration();
+      settingsIntegration.init();
+      console.log("Ez Gmail: Settings integration initialized");
+    }
   } catch (error) {
     console.error("Ez Gmail: Error initializing template system:", error);
   }
   
   // Initialize navigation system
-  if (settings.navigation.enabled) {
+  if (settings && settings.navigation && settings.navigation.enabled) {
     // Wait for Gmail to load
     waitForGmailLoad().then(() => {
       gmailNavigation = new GmailNavigation(settings);

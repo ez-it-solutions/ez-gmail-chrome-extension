@@ -43,6 +43,7 @@
         "js/template-ui.js",
         "js/compose-integration.js",
         "js/gmail-navigation.js",
+        "js/settings-integration.js",
         "js/content.js"
       ],
       "css": [

@@ -87,6 +87,13 @@ class GmailNavigation {
       return;
     }
     
+    // Always hide on settings pages
+    if (this.isSettingsPage()) {
+      nav.style.setProperty('display', 'none', 'important');
+      console.log('Ez Gmail: ✓ Navigation hidden (settings page)');
+      return;
+    }
+    
     const isEmail = this.isViewingEmail();
     const hash = window.location.hash;
     
@@ -532,7 +539,22 @@ class GmailNavigation {
     
     // Listen for URL changes
     window.addEventListener('hashchange', () => {
-      this.updateNavigationBar();
+      // Hide navigation if navigating to settings
+      if (this.isSettingsPage()) {
+        const navBar = document.getElementById('ez-gmail-navigation');
+        if (navBar) {
+          navBar.style.setProperty('display', 'none', 'important');
+          console.log('Ez Gmail: Navigation hidden - navigated to settings');
+        }
+      } else {
+        // Show navigation if navigating away from settings
+        const navBar = document.getElementById('ez-gmail-navigation');
+        if (navBar) {
+          navBar.style.display = '';
+          console.log('Ez Gmail: Navigation shown - navigated away from settings');
+        }
+        this.updateNavigationBar();
+      }
     });
     
     // Mark listeners as attached
@@ -694,6 +716,12 @@ class GmailNavigation {
   enforceStyles(nav) {
     if (!nav) return;
     
+    // Check if we're on a settings page - if so, don't enforce visibility
+    if (this.isSettingsPage()) {
+      nav.style.setProperty('display', 'none', 'important');
+      return;
+    }
+    
     // Check if animation has completed
     const isLoaded = nav.classList.contains('ez-nav-loaded');
     
@@ -837,6 +865,7 @@ class GmailNavigation {
   // Check if we're on a settings page
   isSettingsPage() {
     const hash = window.location.hash;
+    // Hide navigation on ALL settings pages (including Ez Gmail settings)
     return hash.includes('#settings') || hash.includes('/settings');
   }
   
@@ -982,6 +1011,15 @@ class GmailNavigation {
     
     // Monitor URL changes to update visibility
     this.monitorUrlChanges();
+    
+    // Final check: hide if we're on a settings page
+    if (this.isSettingsPage()) {
+      const navBar = document.getElementById('ez-gmail-navigation');
+      if (navBar) {
+        navBar.style.setProperty('display', 'none', 'important');
+        console.log('Ez Gmail: Navigation hidden - on settings page');
+      }
+    }
     
     console.log('Ez Gmail: Navigation bar initialized successfully');
     this.isInitializing = false;
