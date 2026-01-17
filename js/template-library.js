@@ -641,3 +641,8 @@ Best regards,
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = TEMPLATE_LIBRARY;
 }
+
+// Make available globally for extension pages
+if (typeof window !== 'undefined') {
+  window.TEMPLATE_LIBRARY = TEMPLATE_LIBRARY;
+}

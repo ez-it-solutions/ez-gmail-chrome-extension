@@ -58,12 +58,23 @@ async function loadTemplates() {
             : 'Try adjusting your search or filter'}
         </div>
         ${templates.length === 0 ? `
-          <button class="btn" onclick="loadSampleTemplates()">
+          <button class="btn" id="emptyStateLoadBtn">
             Load Sample Templates
           </button>
         ` : ''}
       </div>
     `;
+    
+    // Add event listener for empty state button if it exists
+    if (templates.length === 0) {
+      setTimeout(() => {
+        const emptyBtn = document.getElementById('emptyStateLoadBtn');
+        if (emptyBtn) {
+          emptyBtn.addEventListener('click', loadSampleTemplates);
+        }
+      }, 0);
+    }
+    
     return;
   }
   
@@ -78,6 +89,7 @@ async function loadTemplates() {
 function createTemplateCard(template) {
   const card = document.createElement('div');
   card.className = 'template-card';
+  card.dataset.templateId = template.id;
   
   const preview = template.body.replace(/<[^>]*>/g, '').substring(0, 100);
   
@@ -91,13 +103,13 @@ function createTemplateCard(template) {
     <div class="template-subject">${escapeHtml(template.subject)}</div>
     <div class="template-preview">${escapeHtml(preview)}...</div>
     <div class="template-actions">
-      <button class="template-action-btn" onclick="editTemplate('${template.id}')">
+      <button class="template-action-btn" data-action="edit">
         Edit
       </button>
-      <button class="template-action-btn" onclick="duplicateTemplate('${template.id}')">
+      <button class="template-action-btn" data-action="duplicate">
         Duplicate
       </button>
-      <button class="template-action-btn" onclick="deleteTemplate('${template.id}')">
+      <button class="template-action-btn" data-action="delete">
         Delete
       </button>
     </div>
@@ -108,16 +120,44 @@ function createTemplateCard(template) {
 
 // Update statistics
 function updateStats() {
-  const templates = templateManager.getAllTemplates();
-  const stats = templateManager.getTemplateStats();
-  
-  document.getElementById('totalTemplates').textContent = templates.length;
-  document.getElementById('totalCategories').textContent = Object.keys(stats.byCategory).length;
-  
-  // Calculate storage usage
-  const usage = templateManager.getStorageUsage();
-  const percentage = ((usage.used / usage.total) * 100).toFixed(1);
-  document.getElementById('storageUsed').textContent = percentage + '%';
+  try {
+    const templates = templateManager.getAllTemplates();
+    
+    // Get stats (with fallback if method doesn't exist)
+    let stats;
+    if (typeof templateManager.getTemplateStats === 'function') {
+      stats = templateManager.getTemplateStats();
+    } else {
+      // Fallback: calculate stats manually
+      stats = {
+        total: templates.length,
+        byCategory: {}
+      };
+      templates.forEach(t => {
+        if (!stats.byCategory[t.category]) {
+          stats.byCategory[t.category] = 0;
+        }
+        stats.byCategory[t.category]++;
+      });
+    }
+    
+    document.getElementById('totalTemplates').textContent = templates.length;
+    document.getElementById('totalCategories').textContent = Object.keys(stats.byCategory).length;
+    
+    // Calculate storage usage
+    const usage = templateManager.getStorageUsage();
+    let percentage = 0;
+    if (usage && usage.used !== undefined && usage.total && usage.total > 0) {
+      percentage = ((usage.used / usage.total) * 100).toFixed(1);
+    }
+    document.getElementById('storageUsed').textContent = percentage + '%';
+  } catch (error) {
+    console.error('Error updating stats:', error);
+    // Set default values on error
+    document.getElementById('totalTemplates').textContent = '0';
+    document.getElementById('totalCategories').textContent = '0';
+    document.getElementById('storageUsed').textContent = '0%';
+  }
 }
 
 // Populate category filter
@@ -156,68 +196,221 @@ function setupEventListeners() {
   
   // Load samples button
   document.getElementById('loadSamplesBtn').addEventListener('click', loadSampleTemplates);
+  
+  // Template action buttons (using event delegation)
+  document.getElementById('templatesGrid').addEventListener('click', (e) => {
+    const actionBtn = e.target.closest('.template-action-btn');
+    if (!actionBtn) return;
+    
+    const card = actionBtn.closest('.template-card');
+    if (!card) return;
+    
+    const templateId = card.dataset.templateId;
+    const action = actionBtn.dataset.action;
+    
+    console.log('Template action clicked:', action, 'ID:', templateId);
+    
+    switch (action) {
+      case 'edit':
+        editTemplate(templateId);
+        break;
+      case 'duplicate':
+        duplicateTemplate(templateId);
+        break;
+      case 'delete':
+        deleteTemplate(templateId);
+        break;
+    }
+  });
 }
 
 // Create new template
 function createTemplate() {
-  const name = prompt('Template Name:');
-  if (!name) return;
+  // Create modal
+  const modal = document.createElement('div');
+  modal.className = 'ez-template-modal';
+  modal.innerHTML = `
+    <div class="ez-template-modal-content" style="max-width: 600px;">
+      <div class="ez-template-modal-header">
+        <h2>Create New Template</h2>
+        <button class="ez-template-modal-close" id="createModalClose">&times;</button>
+      </div>
+      <div style="padding: 24px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Template Name *</label>
+          <input type="text" id="createName" placeholder="e.g., Meeting Follow-up"
+                 style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Category *</label>
+          <select id="createCategory" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
+            ${templateManager.getCategories().map(cat => 
+              `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Subject *</label>
+          <input type="text" id="createSubject" placeholder="e.g., Re: {{projectName}}"
+                 style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Body *</label>
+          <textarea id="createBody" rows="10" placeholder="Use {{variableName}} for dynamic content..."
+                    style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; font-family: monospace;"></textarea>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn btn-secondary" id="createCancelBtn">Cancel</button>
+          <button class="btn" id="createSaveBtn">Create Template</button>
+        </div>
+      </div>
+    </div>
+  `;
   
-  const category = prompt('Category (work/personal/sales/support/signature):');
-  if (!category) return;
+  document.body.appendChild(modal);
   
-  const subject = prompt('Email Subject:');
-  if (!subject) return;
+  // Event listeners
+  const closeModal = () => modal.remove();
   
-  const body = prompt('Email Body:');
-  if (!body) return;
+  document.getElementById('createModalClose').addEventListener('click', closeModal);
+  document.getElementById('createCancelBtn').addEventListener('click', closeModal);
   
-  const template = templateManager.createTemplate({
-    name,
-    category,
-    subject,
-    body
+  document.getElementById('createSaveBtn').addEventListener('click', () => {
+    const name = document.getElementById('createName').value.trim();
+    const category = document.getElementById('createCategory').value;
+    const subject = document.getElementById('createSubject').value.trim();
+    const body = document.getElementById('createBody').value.trim();
+    
+    if (!name || !subject || !body) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    const template = templateManager.createTemplate({
+      name,
+      category,
+      subject,
+      body
+    });
+    
+    if (template) {
+      alert('Template created successfully!');
+      loadTemplates();
+      updateStats();
+      populateCategoryFilter();
+      closeModal();
+    } else {
+      alert('Failed to create template');
+    }
   });
   
-  if (template) {
-    alert('Template created successfully!');
-    loadTemplates();
-    updateStats();
-  } else {
-    alert('Failed to create template');
-  }
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  
+  // Focus first input
+  setTimeout(() => document.getElementById('createName').focus(), 100);
 }
 
 // Edit template
 function editTemplate(id) {
+  console.log('editTemplate called with ID:', id);
   const template = templateManager.getTemplate(id);
-  if (!template) return;
+  console.log('Template found:', template);
+  if (!template) {
+    alert('Template not found');
+    return;
+  }
   
-  const name = prompt('Template Name:', template.name);
-  if (!name) return;
+  // Create edit modal
+  const modal = document.createElement('div');
+  modal.className = 'ez-template-modal';
+  modal.innerHTML = `
+    <div class="ez-template-modal-content" style="max-width: 600px;">
+      <div class="ez-template-modal-header">
+        <h2>Edit Template</h2>
+        <button class="ez-template-modal-close" id="editModalClose">&times;</button>
+      </div>
+      <div style="padding: 24px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Template Name</label>
+          <input type="text" id="editName" value="${escapeHtml(template.name)}" 
+                 style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Category</label>
+          <select id="editCategory" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
+            ${templateManager.getCategories().map(cat => 
+              `<option value="${cat}" ${cat === template.category ? 'selected' : ''}>${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Subject</label>
+          <input type="text" id="editSubject" value="${escapeHtml(template.subject)}"
+                 style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Body</label>
+          <textarea id="editBody" rows="10"
+                    style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; font-family: monospace;">${escapeHtml(template.body)}</textarea>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+          <button class="btn" id="editSaveBtn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  `;
   
-  const category = prompt('Category:', template.category);
-  if (!category) return;
+  document.body.appendChild(modal);
   
-  const subject = prompt('Email Subject:', template.subject);
-  if (!subject) return;
+  // Event listeners
+  const closeModal = () => modal.remove();
   
-  const body = prompt('Email Body:', template.body);
-  if (!body) return;
+  document.getElementById('editModalClose').addEventListener('click', closeModal);
+  document.getElementById('editCancelBtn').addEventListener('click', closeModal);
   
-  const updated = templateManager.updateTemplate(id, {
-    name,
-    category,
-    subject,
-    body
+  document.getElementById('editSaveBtn').addEventListener('click', () => {
+    const name = document.getElementById('editName').value.trim();
+    const category = document.getElementById('editCategory').value;
+    const subject = document.getElementById('editSubject').value.trim();
+    const body = document.getElementById('editBody').value.trim();
+    
+    if (!name || !subject || !body) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    const updated = templateManager.updateTemplate(id, {
+      name,
+      category,
+      subject,
+      body
+    });
+    
+    if (updated) {
+      alert('Template updated successfully!');
+      loadTemplates();
+      updateStats();
+      closeModal();
+    } else {
+      alert('Failed to update template');
+    }
   });
   
-  if (updated) {
-    alert('Template updated successfully!');
-    loadTemplates();
-  } else {
-    alert('Failed to update template');
-  }
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  
+  // Focus first input
+  setTimeout(() => document.getElementById('editName').focus(), 100);
 }
 
 // Duplicate template
@@ -261,16 +454,26 @@ function deleteTemplate(id) {
 
 // Load sample templates
 async function loadSampleTemplates() {
+  if (!window.TEMPLATE_LIBRARY) {
+    alert('Template library not available. Please refresh the page.');
+    return;
+  }
+  
   if (confirm('Load sample templates? This will add prebuilt templates to your collection.')) {
-    const imported = await templateManager.importTemplates(TEMPLATE_LIBRARY);
-    
-    if (imported > 0) {
-      alert(`${imported} sample templates loaded successfully!`);
-      loadTemplates();
-      updateStats();
-      populateCategoryFilter();
-    } else {
-      alert('All sample templates are already loaded');
+    try {
+      const imported = await templateManager.importTemplates(window.TEMPLATE_LIBRARY);
+      
+      if (imported > 0) {
+        alert(`${imported} sample templates loaded successfully!`);
+        loadTemplates();
+        updateStats();
+        populateCategoryFilter();
+      } else {
+        alert('All sample templates are already loaded');
+      }
+    } catch (error) {
+      console.error('Error loading sample templates:', error);
+      alert('Error loading sample templates. Please try again.');
     }
   }
 }

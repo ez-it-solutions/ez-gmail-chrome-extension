@@ -380,6 +380,32 @@ class TemplateManager {
     return usage.isNearLimit;
   }
 
+  // Get template statistics
+  getTemplateStats() {
+    const stats = {
+      total: this.templates.length,
+      byCategory: {},
+      withVariables: 0,
+      totalVariables: 0
+    };
+
+    this.templates.forEach(template => {
+      // Count by category
+      if (!stats.byCategory[template.category]) {
+        stats.byCategory[template.category] = 0;
+      }
+      stats.byCategory[template.category]++;
+
+      // Count templates with variables
+      if (template.variables && template.variables.length > 0) {
+        stats.withVariables++;
+        stats.totalVariables += template.variables.length;
+      }
+    });
+
+    return stats;
+  }
+
   // Duplicate template
   async duplicateTemplate(id) {
     const original = this.getTemplate(id);

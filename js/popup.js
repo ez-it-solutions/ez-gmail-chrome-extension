@@ -13,7 +13,7 @@ async function initializeUI() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
   // Check if we're on Gmail
-  if (!tab.url.includes('mail.google.com')) {
+  if (!tab || !tab.url || !tab.url.includes('mail.google.com')) {
     showNotification("Please open Gmail to use this extension", true);
   }
 }
