@@ -834,8 +834,20 @@ class GmailNavigation {
     });
   }
   
+  // Check if we're on a settings page
+  isSettingsPage() {
+    const hash = window.location.hash;
+    return hash.includes('#settings') || hash.includes('/settings');
+  }
+  
   // Initialize navigation
   async init() {
+    // Don't show navigation on settings pages
+    if (this.isSettingsPage()) {
+      console.log('Ez Gmail: Settings page detected, skipping navigation bar');
+      return;
+    }
+    
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
       console.log('Ez Gmail: Already initializing, skipping...');
@@ -989,8 +1001,16 @@ class GmailNavigation {
       console.log('Ez Gmail: Hash changed -', window.location.hash);
       // Small delay to let Gmail update the DOM
       setTimeout(() => {
-        this.updateNavigationVisibility();
-        this.updateNavigationBar();
+        // Hide navigation on settings pages
+        if (this.isSettingsPage()) {
+          const nav = document.getElementById('ez-gmail-navigation');
+          if (nav) {
+            nav.style.display = 'none';
+          }
+        } else {
+          this.updateNavigationVisibility();
+          this.updateNavigationBar();
+        }
       }, 100);
     });
     
@@ -1013,8 +1033,16 @@ class GmailNavigation {
       console.log('Ez Gmail: URL changed (pushState) -', window.location.hash);
       // Small delay to let Gmail update the DOM
       setTimeout(() => {
-        self.updateNavigationVisibility();
-        self.updateNavigationBar();
+        // Hide navigation on settings pages
+        if (self.isSettingsPage()) {
+          const nav = document.getElementById('ez-gmail-navigation');
+          if (nav) {
+            nav.style.display = 'none';
+          }
+        } else {
+          self.updateNavigationVisibility();
+          self.updateNavigationBar();
+        }
       }, 100);
     });
     
