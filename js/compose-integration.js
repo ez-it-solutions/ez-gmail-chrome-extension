@@ -286,9 +286,20 @@ class ComposeIntegration {
       field.dispatchEvent(event);
     } else if (field.contentEditable === 'true') {
       // ContentEditable div (Gmail's body field)
-      // Convert newlines to <br> tags for HTML
-      const htmlValue = value.replace(/\n/g, '<br>');
-      field.innerHTML = htmlValue;
+      
+      // Check if value contains HTML (starts with < and contains tags)
+      const isHTML = value.trim().startsWith('<') && /<[^>]+>/.test(value);
+      
+      if (isHTML) {
+        // Insert HTML directly for signatures and formatted content
+        // Add two blank lines before HTML content
+        field.innerHTML = '<br><br>' + value;
+      } else {
+        // Convert newlines to <br> tags for plain text
+        // Add two blank lines before plain text content
+        const htmlValue = value.replace(/\n/g, '<br>');
+        field.innerHTML = '<br><br>' + htmlValue;
+      }
       
       // Trigger input event
       const event = new Event('input', { bubbles: true });

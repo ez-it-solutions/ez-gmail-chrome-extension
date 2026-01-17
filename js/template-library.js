@@ -634,6 +634,499 @@ Is this still a priority for you? If not, no problem - just let me know so I can
 Best regards,
 {{yourName}}`
     }
+  ],
+
+  // Jacksonville College Templates
+  'Jacksonville College': [
+    {
+      name: 'JC - CIO Signature (Verse of Day)',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `<div dir="ltr" style="margin-top:40px">
+<table cellspacing="0" width="500" cellpadding="0" border="0">
+  <tbody>
+    <tr>
+      <td valign="top" width="225" style="padding-right:15px">
+        <img src="https://jacksonvillecollege.edu/wp-content/uploads/2022/10/Asset-41PNG.png" width="225" alt="Jacksonville College" style="width:225px;max-width:225px;padding-top:20px">
+      </td>
+      <td>
+        <table style="line-height:1.4;font-size:14.4px;color:rgb(0,0,1)">
+          <tbody>
+            <tr>
+              <td style="padding-bottom:1px;padding-top:10px;font-weight:600;font-stretch:normal;font-size:25px;line-height:normal;color:rgb(73,31,149)">Chris Hultberg</td>
+            </tr>
+            <tr>
+              <td style="padding-bottom:7px">
+                <div style="font-weight:600;font-size:12px">
+                  Director of Systems and Technology<br>
+                  <p style="padding-top:0px;margin-top:0px;color:rgb(120,120,120);margin-bottom:5px!important">
+                    Chief Information Officer
+                  </p><br>
+                  Jacksonville College
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="margin:0.1px;padding:1px 0px">
+                <a href="tel:(903)589-7101" style="color:rgb(0,0,0)" target="_blank">(903) 589-7101</a>
+              </td>
+            </tr>
+            <tr style="margin-top:10px">
+              <td style="padding-right:0px;padding-bottom:1px;padding-left:0px;padding-top:10px!important">
+                <a href="mailto:chultberg@jacksonville-college.edu" style="color:rgb(0,0,0)" target="_blank">chultberg@jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0px">
+                <a href="https://www.jacksonville-college.edu/" style="color:rgb(0,0,0)" target="_blank">www.jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr style="padding-bottom:0px!important">
+              <td style="margin-top:0.1px;margin-right:0.1px;margin-left:0.1px;padding:1px 0px">
+                <a href="https://goo.gl/maps/j6YgQ5gCivUZeG4x9" style="color:rgb(17,85,204)" target="_blank">
+                  <p style="padding-top:10px;color:rgb(0,0,0);margin-bottom:5px!important">
+                    105 B.J. Albritton<br>
+                    Jacksonville, TX 75766
+                  </p>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table style="padding-top:10px">
+                  <tbody>
+                    <tr>
+                      <td style="padding-right:4px">
+                        <a href="https://www.facebook.com/jacksonvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.instagram.com/jvillecollege/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://twitter.com/jvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/twitter-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.linkedin.com/in/chris-hultberg/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/linkedin-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table style="color:gray;line-height:1.3;width:500px;margin-top:15px">
+  <tbody>
+    <tr>
+      <td style="font-size:12px;font-style:italic;color:rgb(73,31,149);padding-bottom:10px">
+        {{verseOfTheDay}}
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size:12px">
+        IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>`
+    },
+    {
+      name: 'JC - HTML Signature (Verse of Day)',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `<div dir="ltr" style="margin-top:40px">
+<table cellspacing="0" width="500" cellpadding="0" border="0">
+  <tbody>
+    <tr>
+      <td valign="top" width="225" style="padding-right:15px">
+        <img src="https://jacksonvillecollege.edu/wp-content/uploads/2022/10/Asset-41PNG.png" width="225" alt="Jacksonville College" style="width:225px;max-width:225px;padding-top:20px">
+      </td>
+      <td>
+        <table style="line-height:1.4;font-size:14.4px;color:rgb(0,0,1)">
+          <tbody>
+            <tr>
+              <td style="padding-bottom:1px;padding-top:10px;font-weight:600;font-stretch:normal;font-size:25px;line-height:normal;color:rgb(73,31,149)">Chris Hultberg</td>
+            </tr>
+            <tr>
+              <td style="padding-bottom:7px">
+                <div style="font-weight:600;font-size:12px">
+                  Director of Information Technology<br>
+                  Director of Marketing and Systems<br><br>
+                  Jacksonville College
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="margin:0.1px;padding:1px 0px">
+                <a href="tel:(903)589-7101" style="color:rgb(0,0,0)" target="_blank">(903) 589-7101</a>
+              </td>
+            </tr>
+            <tr style="margin-top:10px">
+              <td style="padding-right:0px;padding-bottom:1px;padding-left:0px;padding-top:10px!important">
+                <a href="mailto:chultberg@jacksonville-college.edu" style="color:rgb(0,0,0)" target="_blank">chultberg@jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0px">
+                <a href="https://www.jacksonville-college.edu/" style="color:rgb(0,0,0)" target="_blank">www.jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr style="padding-bottom:0px!important">
+              <td style="margin-top:0.1px;margin-right:0.1px;margin-left:0.1px;padding:1px 0px">
+                <a href="https://goo.gl/maps/j6YgQ5gCivUZeG4x9" style="color:rgb(17,85,204)" target="_blank">
+                  <p style="padding-top:10px;color:rgb(0,0,0);margin-bottom:5px!important">
+                    105 B.J. Albritton<br>
+                    Jacksonville, TX 75766
+                  </p>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table style="padding-top:10px">
+                  <tbody>
+                    <tr>
+                      <td style="padding-right:4px">
+                        <a href="https://www.facebook.com/jacksonvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.instagram.com/jvillecollege/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://twitter.com/jvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/twitter-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.linkedin.com/in/chris-hultberg/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/linkedin-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table style="color:gray;line-height:1.3;width:500px;margin-top:15px">
+  <tbody>
+    <tr>
+      <td style="font-size:12px;font-style:italic;color:rgb(73,31,149);padding-bottom:10px">
+        {{verseOfTheDay}}
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size:12px">
+        IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>`
+    },
+    {
+      name: 'JC - HTML Signature (Quote of Day)',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `<div dir="ltr" style="margin-top:40px">
+<table cellspacing="0" width="500" cellpadding="0" border="0">
+  <tbody>
+    <tr>
+      <td valign="top" width="225" style="padding-right:15px">
+        <img src="https://jacksonvillecollege.edu/wp-content/uploads/2022/10/Asset-41PNG.png" width="225" alt="Jacksonville College" style="width:225px;max-width:225px;padding-top:20px">
+      </td>
+      <td>
+        <table style="line-height:1.4;font-size:14.4px;color:rgb(0,0,1)">
+          <tbody>
+            <tr>
+              <td style="padding-bottom:1px;padding-top:10px;font-weight:600;font-stretch:normal;font-size:25px;line-height:normal;color:rgb(73,31,149)">Chris Hultberg</td>
+            </tr>
+            <tr>
+              <td style="padding-bottom:7px">
+                <div style="font-weight:600;font-size:12px">
+                  Director of Information Technology<br>
+                  Director of Marketing and Systems<br><br>
+                  Jacksonville College
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="margin:0.1px;padding:1px 0px">
+                <a href="tel:(903)589-7101" style="color:rgb(0,0,0)" target="_blank">(903) 589-7101</a>
+              </td>
+            </tr>
+            <tr style="margin-top:10px">
+              <td style="padding-right:0px;padding-bottom:1px;padding-left:0px;padding-top:10px!important">
+                <a href="mailto:chultberg@jacksonville-college.edu" style="color:rgb(0,0,0)" target="_blank">chultberg@jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0px">
+                <a href="https://www.jacksonville-college.edu/" style="color:rgb(0,0,0)" target="_blank">www.jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr style="padding-bottom:0px!important">
+              <td style="margin-top:0.1px;margin-right:0.1px;margin-left:0.1px;padding:1px 0px">
+                <a href="https://goo.gl/maps/j6YgQ5gCivUZeG4x9" style="color:rgb(17,85,204)" target="_blank">
+                  <p style="padding-top:10px;color:rgb(0,0,0);margin-bottom:5px!important">
+                    105 B.J. Albritton<br>
+                    Jacksonville, TX 75766
+                  </p>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table style="padding-top:10px">
+                  <tbody>
+                    <tr>
+                      <td style="padding-right:4px">
+                        <a href="https://www.facebook.com/jacksonvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.instagram.com/jvillecollege/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://twitter.com/jvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/twitter-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.linkedin.com/in/chris-hultberg/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/linkedin-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table style="color:gray;line-height:1.3;width:500px;margin-top:15px">
+  <tbody>
+    <tr>
+      <td style="font-size:12px;font-style:italic;color:rgb(73,31,149);padding-bottom:10px">
+        {{quoteOfTheDay}}
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size:12px">
+        IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>`
+    },
+    {
+      name: 'JC - HTML Signature (No Verse/Quote)',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `<div dir="ltr" style="margin-top:40px">
+<table cellspacing="0" width="500" cellpadding="0" border="0">
+  <tbody>
+    <tr>
+      <td valign="top" width="225" style="padding-right:15px">
+        <img src="https://jacksonvillecollege.edu/wp-content/uploads/2022/10/Asset-41PNG.png" width="225" alt="Jacksonville College" style="width:225px;max-width:225px;padding-top:20px">
+      </td>
+      <td>
+        <table style="line-height:1.4;font-size:14.4px;color:rgb(0,0,1)">
+          <tbody>
+            <tr>
+              <td style="padding-bottom:1px;padding-top:10px;font-weight:600;font-stretch:normal;font-size:25px;line-height:normal;color:rgb(73,31,149)">Chris Hultberg</td>
+            </tr>
+            <tr>
+              <td style="padding-bottom:7px">
+                <div style="font-weight:600;font-size:12px">
+                  Director of Information Technology<br>
+                  Director of Marketing and Systems<br><br>
+                  Jacksonville College
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="margin:0.1px;padding:1px 0px">
+                <a href="tel:(903)589-7101" style="color:rgb(0,0,0)" target="_blank">(903) 589-7101</a>
+              </td>
+            </tr>
+            <tr style="margin-top:10px">
+              <td style="padding-right:0px;padding-bottom:1px;padding-left:0px;padding-top:10px!important">
+                <a href="mailto:chultberg@jacksonville-college.edu" style="color:rgb(0,0,0)" target="_blank">chultberg@jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0px">
+                <a href="https://www.jacksonville-college.edu/" style="color:rgb(0,0,0)" target="_blank">www.jacksonville-college.edu</a>
+              </td>
+            </tr>
+            <tr style="padding-bottom:0px!important">
+              <td style="margin-top:0.1px;margin-right:0.1px;margin-left:0.1px;padding:1px 0px">
+                <a href="https://goo.gl/maps/j6YgQ5gCivUZeG4x9" style="color:rgb(17,85,204)" target="_blank">
+                  <p style="padding-top:10px;color:rgb(0,0,0);margin-bottom:5px!important">
+                    105 B.J. Albritton<br>
+                    Jacksonville, TX 75766
+                  </p>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table style="padding-top:10px">
+                  <tbody>
+                    <tr>
+                      <td style="padding-right:4px">
+                        <a href="https://www.facebook.com/jacksonvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/facebook-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.instagram.com/jvillecollege/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/instagram-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://twitter.com/jvillecollege" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/twitter-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                      <td style="padding-right:4px">
+                        <a href="https://www.linkedin.com/in/chris-hultberg/" style="color:rgb(17,85,204);display:block;border-radius:15%;width:22px;height:22px;text-align:center;background-color:rgb(73,31,149);font-size:12px" target="_blank">
+                          <img src="https://cdn2.hubspot.net/hubfs/53/tools/email-signature-generator/icons/linkedin-icon-2x.png" height="22">
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table style="color:gray;line-height:1.3;width:500px;margin-top:15px">
+  <tbody>
+    <tr>
+      <td style="font-size:12px">
+        IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>`
+    },
+    {
+      name: 'Chris Hultberg - Full Signature',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `Chris Hultberg
+Director of Information Technology
+Director of Marketing and Systems
+
+Jacksonville College
+
+(903) 589-7101
+chultberg@jacksonville-college.edu
+www.jacksonville-college.edu
+
+105 B.J. Albritton
+Jacksonville, TX 75766
+
+{{verseOfTheDay}}
+
+IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.`
+    },
+    {
+      name: 'Chris Hultberg - With Quote',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `Chris Hultberg
+Director of Information Technology
+Director of Marketing and Systems
+
+Jacksonville College
+
+(903) 589-7101
+chultberg@jacksonville-college.edu
+www.jacksonville-college.edu
+
+105 B.J. Albritton
+Jacksonville, TX 75766
+
+{{quoteOfTheDay}}
+
+IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.`
+    },
+    {
+      name: 'Chris Hultberg - Custom Verse',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `Chris Hultberg
+Director of Information Technology
+Director of Marketing and Systems
+
+Jacksonville College
+
+(903) 589-7101
+chultberg@jacksonville-college.edu
+www.jacksonville-college.edu
+
+105 B.J. Albritton
+Jacksonville, TX 75766
+
+{{verse:phil-4:13}}
+
+IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.`
+    },
+    {
+      name: 'Chris Hultberg - Simple',
+      category: 'Jacksonville College',
+      subject: '',
+      body: `Chris Hultberg
+Director of Information Technology
+Director of Marketing and Systems
+
+Jacksonville College
+(903) 589-7101
+chultberg@jacksonville-college.edu
+www.jacksonville-college.edu`
+    }
   ]
 };
 

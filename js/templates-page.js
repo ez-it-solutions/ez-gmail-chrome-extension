@@ -191,11 +191,14 @@ function setupEventListeners() {
     loadTemplates();
   });
   
-  // Create template button
+  // Create new template button
   document.getElementById('createTemplateBtn').addEventListener('click', createTemplate);
   
   // Load samples button
   document.getElementById('loadSamplesBtn').addEventListener('click', loadSampleTemplates);
+  
+  // Reimport all button
+  document.getElementById('reimportAllBtn').addEventListener('click', reimportAllTemplates);
   
   // Template action buttons (using event delegation)
   document.getElementById('templatesGrid').addEventListener('click', (e) => {
@@ -250,7 +253,7 @@ function createTemplate() {
           </select>
         </div>
         <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Subject *</label>
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Subject</label>
           <input type="text" id="createSubject" placeholder="e.g., Re: {{projectName}}"
                  style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px;">
         </div>
@@ -281,8 +284,8 @@ function createTemplate() {
     const subject = document.getElementById('createSubject').value.trim();
     const body = document.getElementById('createBody').value.trim();
     
-    if (!name || !subject || !body) {
-      alert('Please fill in all required fields');
+    if (!name || !body) {
+      alert('Please fill in template name and body');
       return;
     }
     
@@ -380,8 +383,8 @@ function editTemplate(id) {
     const subject = document.getElementById('editSubject').value.trim();
     const body = document.getElementById('editBody').value.trim();
     
-    if (!name || !subject || !body) {
-      alert('Please fill in all required fields');
+    if (!name || !body) {
+      alert('Please fill in template name and body');
       return;
     }
     
@@ -474,6 +477,50 @@ async function loadSampleTemplates() {
     } catch (error) {
       console.error('Error loading sample templates:', error);
       alert('Error loading sample templates. Please try again.');
+    }
+  }
+}
+
+// Reimport/refresh all sample templates (force update)
+async function reimportAllTemplates() {
+  if (!window.TEMPLATE_LIBRARY) {
+    alert('Template library not available. Please refresh the page.');
+    return;
+  }
+  
+  if (confirm('Reimport ALL sample templates? This will UPDATE existing templates with the latest versions from the library. Your custom templates will not be affected.')) {
+    try {
+      // Get all templates from library
+      const libraryTemplates = [];
+      Object.values(window.TEMPLATE_LIBRARY).forEach(categoryTemplates => {
+        if (Array.isArray(categoryTemplates)) {
+          libraryTemplates.push(...categoryTemplates);
+        }
+      });
+      
+      // Get existing template names from library
+      const libraryNames = new Set(libraryTemplates.map(t => t.name));
+      
+      // Delete existing library templates
+      const existingTemplates = templateManager.getAllTemplates();
+      let deletedCount = 0;
+      for (const template of existingTemplates) {
+        if (libraryNames.has(template.name)) {
+          await templateManager.deleteTemplate(template.id);
+          deletedCount++;
+        }
+      }
+      
+      // Import fresh copies
+      const imported = await templateManager.importTemplates(window.TEMPLATE_LIBRARY, true);
+      
+      alert(`Reimported ${imported} templates successfully!\n(${deletedCount} old versions removed)`);
+      loadTemplates();
+      updateStats();
+      populateCategoryFilter();
+    } catch (error) {
+      console.error('Error reimporting templates:', error);
+      alert('Error reimporting templates. Please try again.');
     }
   }
 }

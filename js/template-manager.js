@@ -5,7 +5,7 @@
 class TemplateManager {
   constructor() {
     this.templates = [];
-    this.categories = ['Work', 'Personal', 'Support', 'Sales', 'Follow-up', 'Signature', 'Other'];
+    this.categories = ['Work', 'Personal', 'Support', 'Sales', 'Follow-up', 'Signature', 'Other', 'Jacksonville College'];
     this.storageKey = 'ezgmail_templates';
     this.initialized = false;
   }
@@ -192,14 +192,20 @@ class TemplateManager {
   replaceVariables(text, values) {
     let result = text;
     
+    // Process special variables (verses and quotes) first
+    if (window.EzGmailVerseQuoteManager) {
+      result = window.EzGmailVerseQuoteManager.processSpecialVariables(result);
+    }
+    
     // Replace each variable with its value
     Object.keys(values).forEach(key => {
       const pattern = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
       result = result.replace(pattern, values[key] || '');
     });
 
-    // Replace any remaining variables with empty string
-    result = result.replace(/\{\{\w+\}\}/g, '');
+    // Replace any remaining simple variables with empty string
+    // But preserve verse: and other special patterns
+    result = result.replace(/\{\{(?!verse:|verseOfTheDay|quoteOfTheDay|randomQuote)(\w+)\}\}/g, '');
 
     return result;
   }
@@ -240,31 +246,55 @@ class TemplateManager {
     return JSON.stringify(this.templates, null, 2);
   }
 
-  // Import templates from JSON
-  async importTemplates(jsonString, merge = false) {
+  // Import templates from JSON or template library object
+  async importTemplates(data, merge = true) {
     try {
-      const imported = JSON.parse(jsonString);
+      let imported;
       
-      if (!Array.isArray(imported)) {
-        throw new Error('Invalid template data');
+      // Handle both JSON strings and objects
+      if (typeof data === 'string') {
+        imported = JSON.parse(data);
+      } else if (typeof data === 'object') {
+        // If it's the TEMPLATE_LIBRARY object with categories
+        if (!Array.isArray(data)) {
+          // Flatten all categories into a single array
+          imported = [];
+          Object.values(data).forEach(categoryTemplates => {
+            if (Array.isArray(categoryTemplates)) {
+              imported.push(...categoryTemplates);
+            }
+          });
+        } else {
+          imported = data;
+        }
+      } else {
+        throw new Error('Invalid template data format');
+      }
+      
+      if (!Array.isArray(imported) || imported.length === 0) {
+        throw new Error('No valid templates found');
       }
 
+      let addedCount = 0;
+      
       if (merge) {
         // Merge with existing templates (avoid duplicates by name)
         const existingNames = new Set(this.templates.map(t => t.name));
         const newTemplates = imported.filter(t => !existingNames.has(t.name));
         this.templates.push(...newTemplates);
+        addedCount = newTemplates.length;
       } else {
         // Replace all templates
         this.templates = imported;
+        addedCount = imported.length;
       }
 
       await this.saveTemplates();
-      console.log('Ez Gmail: Templates imported successfully');
-      return true;
+      console.log(`Ez Gmail: ${addedCount} templates imported successfully`);
+      return addedCount;
     } catch (error) {
       console.error('Ez Gmail: Error importing templates:', error);
-      return false;
+      return 0;
     }
   }
 
