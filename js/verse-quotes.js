@@ -310,20 +310,32 @@ class VerseQuoteManager {
     // Get selected translation from storage
     return new Promise((resolve) => {
       if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.local.get(['ezBibleTranslation', 'ezCachedVerses'], async (result) => {
+        chrome.storage.local.get(['ezBibleTranslation', 'ezCachedVerses', 'ezCustomVerses'], async (result) => {
           const translation = result.ezBibleTranslation || 'CSB';
           const cachedVerses = result.ezCachedVerses || {};
+          const customVerses = result.ezCustomVerses || {};
           
           // Create cache key
           const cacheKey = `${key}_${translation}`;
           
-          // If translation is NKJV and we have it stored, use our version
-          if (translation === 'NKJV') {
-            resolve(defaultVerse);
+          // Check custom verses first
+          if (customVerses[key] && customVerses[key].version === translation) {
+            console.log('Ez Gmail: Using custom verse:', key);
+            resolve(customVerses[key]);
             return;
           }
           
-          // Check cache first
+          // Check presets for CSB, ESV, NKJV
+          if (window.EzGmailVersePresets && ['CSB', 'ESV', 'NKJV'].includes(translation)) {
+            const presetVerses = window.EzGmailVersePresets.getVersesByTranslation(translation);
+            if (presetVerses[key]) {
+              console.log('Ez Gmail: Using preset verse:', key, translation);
+              resolve(presetVerses[key]);
+              return;
+            }
+          }
+          
+          // Check cache
           if (cachedVerses[cacheKey]) {
             console.log('Ez Gmail: Using cached verse:', cacheKey);
             resolve(cachedVerses[cacheKey]);

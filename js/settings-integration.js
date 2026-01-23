@@ -729,6 +729,99 @@ class SettingsIntegration {
               <div style="font-size: 13px; color: #5f6368;">Show inspirational quotes in templates</div>
             </div>
           </label>
+          
+          <!-- Verse Presets Section -->
+          <div style="padding: 16px; border-radius: 4px; background: #e8f0fe; margin-top: 16px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 500; color: #202124;">Verse Translation Presets</h3>
+            <p style="font-size: 13px; color: #5f6368; margin-bottom: 12px;">Download pre-translated verse collections for offline use</p>
+            
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+              <button id="ezDownloadCSB" class="ez-preset-btn" style="
+                background: white;
+                color: #1a73e8;
+                border: 1px solid #dadce0;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+              ">
+                📥 Download CSB
+              </button>
+              <button id="ezDownloadESV" class="ez-preset-btn" style="
+                background: white;
+                color: #1a73e8;
+                border: 1px solid #dadce0;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+              ">
+                📥 Download ESV
+              </button>
+              <button id="ezDownloadNKJV" class="ez-preset-btn" style="
+                background: white;
+                color: #1a73e8;
+                border: 1px solid #dadce0;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+              ">
+                📥 Download NKJV
+              </button>
+            </div>
+            
+            <h3 style="margin: 16px 0 12px 0; font-size: 16px; font-weight: 500; color: #202124;">Custom Verses</h3>
+            <p style="font-size: 13px; color: #5f6368; margin-bottom: 12px;">Import your own verses or customize existing ones</p>
+            
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="ezImportVerses" class="ez-preset-btn" style="
+                background: linear-gradient(135deg, #1a73e8 0%, #34a853 100%);
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: transform 0.2s;
+              ">
+                📤 Import Custom Verses
+              </button>
+              <button id="ezExportVerses" class="ez-preset-btn" style="
+                background: white;
+                color: #1a73e8;
+                border: 1px solid #dadce0;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+              ">
+                💾 Export Custom Verses
+              </button>
+              <button id="ezAddVerse" class="ez-preset-btn" style="
+                background: white;
+                color: #34a853;
+                border: 1px solid #dadce0;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.2s;
+              ">
+                ➕ Add New Verse
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -869,6 +962,106 @@ class SettingsIntegration {
       });
     }
 
+    // Verse preset download buttons
+    const downloadCSB = document.getElementById('ezDownloadCSB');
+    if (downloadCSB) {
+      downloadCSB.addEventListener('click', () => {
+        if (window.EzGmailVersePresets) {
+          window.EzGmailVersePresets.downloadPreset('CSB');
+          alert('CSB verse preset downloaded!');
+        }
+      });
+    }
+    
+    const downloadESV = document.getElementById('ezDownloadESV');
+    if (downloadESV) {
+      downloadESV.addEventListener('click', () => {
+        if (window.EzGmailVersePresets) {
+          window.EzGmailVersePresets.downloadPreset('ESV');
+          alert('ESV verse preset downloaded!');
+        }
+      });
+    }
+    
+    const downloadNKJV = document.getElementById('ezDownloadNKJV');
+    if (downloadNKJV) {
+      downloadNKJV.addEventListener('click', () => {
+        if (window.EzGmailVersePresets) {
+          window.EzGmailVersePresets.downloadPreset('NKJV');
+          alert('NKJV verse preset downloaded!');
+        }
+      });
+    }
+    
+    // Import custom verses
+    const importVerses = document.getElementById('ezImportVerses');
+    if (importVerses) {
+      importVerses.addEventListener('click', () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const text = await file.text();
+            if (window.EzGmailVersePresets) {
+              const success = await window.EzGmailVersePresets.importCustomVerses(text);
+              if (success) {
+                alert('Custom verses imported successfully!');
+              } else {
+                alert('Error importing verses. Please check file format.');
+              }
+            }
+          }
+        });
+        fileInput.click();
+      });
+    }
+    
+    // Export custom verses
+    const exportVerses = document.getElementById('ezExportVerses');
+    if (exportVerses) {
+      exportVerses.addEventListener('click', async () => {
+        if (window.EzGmailVersePresets) {
+          const success = await window.EzGmailVersePresets.exportCustomVerses();
+          if (success) {
+            alert('Custom verses exported successfully!');
+          } else {
+            alert('No custom verses to export.');
+          }
+        }
+      });
+    }
+    
+    // Add new verse
+    const addVerse = document.getElementById('ezAddVerse');
+    if (addVerse) {
+      addVerse.addEventListener('click', () => {
+        this.showAddVerseModal();
+      });
+    }
+    
+    // Add hover effects to preset buttons
+    const presetBtns = document.querySelectorAll('.ez-preset-btn');
+    presetBtns.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        if (btn.style.background === 'white' || btn.style.background.includes('rgb(255, 255, 255)')) {
+          btn.style.background = '#f8f9fa';
+        } else if (btn.style.background.includes('gradient')) {
+          btn.style.transform = 'translateY(-2px)';
+          btn.style.boxShadow = '0 4px 12px rgba(26,115,232,0.4)';
+        }
+      });
+      btn.addEventListener('mouseleave', () => {
+        if (btn.style.background === '#f8f9fa' || btn.style.background.includes('rgb(248, 249, 250)')) {
+          btn.style.background = 'white';
+        } else if (btn.style.background.includes('gradient')) {
+          btn.style.transform = 'translateY(0)';
+          btn.style.boxShadow = 'none';
+        }
+      });
+    });
+
     // Load saved settings
     chrome.storage.local.get([
       'ezNavEnabled', 'ezNavDatePicker', 'ezNavPageNumbers', 
@@ -899,6 +1092,74 @@ class SettingsIntegration {
       if (translationSelect) {
         translationSelect.value = result.ezBibleTranslation || 'CSB';
       }
+    });
+  }
+  
+  // Show add verse modal
+  showAddVerseModal() {
+    const modal = document.createElement('div');
+    modal.className = 'ez-variable-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+    
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%;">
+        <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 500; color: #202124;">Add Custom Verse</h2>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500; color: #202124;">Verse Key</label>
+          <input type="text" id="verseKey" placeholder="e.g., john-3:16" style="width: 100%; padding: 8px; border: 1px solid #dadce0; border-radius: 4px;">
+          <small style="color: #5f6368; font-size: 12px;">Use format: book-chapter:verse (e.g., john-3:16, ps-23:1)</small>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500; color: #202124;">Reference</label>
+          <input type="text" id="verseReference" placeholder="e.g., John 3:16" style="width: 100%; padding: 8px; border: 1px solid #dadce0; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500; color: #202124;">Translation</label>
+          <input type="text" id="verseVersion" placeholder="e.g., CSB, ESV, NKJV" style="width: 100%; padding: 8px; border: 1px solid #dadce0; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 4px; font-weight: 500; color: #202124;">Verse Text</label>
+          <textarea id="verseText" rows="4" placeholder="Enter the verse text..." style="width: 100%; padding: 8px; border: 1px solid #dadce0; border-radius: 4px; resize: vertical;"></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button id="cancelAddVerse" style="padding: 8px 16px; border: 1px solid #dadce0; border-radius: 4px; background: white; cursor: pointer;">Cancel</button>
+          <button id="saveAddVerse" style="padding: 8px 16px; border: none; border-radius: 4px; background: linear-gradient(135deg, #1a73e8 0%, #34a853 100%); color: white; cursor: pointer;">Add Verse</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('cancelAddVerse').addEventListener('click', () => modal.remove());
+    document.getElementById('saveAddVerse').addEventListener('click', async () => {
+      const key = document.getElementById('verseKey').value.trim();
+      const reference = document.getElementById('verseReference').value.trim();
+      const version = document.getElementById('verseVersion').value.trim();
+      const text = document.getElementById('verseText').value.trim();
+      
+      if (!key || !reference || !version || !text) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      const verse = { text, reference, version };
+      
+      if (window.EzGmailVersePresets) {
+        await window.EzGmailVersePresets.addCustomVerse(key, verse);
+        alert('Custom verse added successfully!');
+        modal.remove();
+      }
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
     });
   }
 

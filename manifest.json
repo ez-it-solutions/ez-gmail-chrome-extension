@@ -38,6 +38,7 @@
       "js": [
         "js/settings.js",
         "js/verse-quotes.js",
+        "js/verse-presets.js",
         "js/template-library.js",
         "js/template-manager.js",
         "js/profile-manager.js",
