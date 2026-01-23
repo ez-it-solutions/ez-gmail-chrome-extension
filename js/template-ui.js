@@ -959,6 +959,33 @@ class TemplateUI {
       setTimeout(() => notification.remove(), 300);
     }, 3000);
   }
+
+  // Cleanup and destroy
+  destroy() {
+    console.log('Ez Gmail: Destroying TemplateUI...');
+    
+    // Close any open modals
+    const modals = document.querySelectorAll('.ez-template-modal, .ez-variable-modal');
+    modals.forEach(modal => {
+      if (modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
+    });
+    
+    // Remove notifications
+    const notifications = document.querySelectorAll('.ez-template-notification');
+    notifications.forEach(notification => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    });
+    
+    // Clear references
+    this.templateManager = null;
+    this.profileManager = null;
+    
+    console.log('Ez Gmail: TemplateUI destroyed');
+  }
 }
 
 // Create global instance

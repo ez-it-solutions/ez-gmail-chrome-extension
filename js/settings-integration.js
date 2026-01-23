@@ -475,27 +475,41 @@ class SettingsIntegration {
 
   // Show Ez Gmail settings panel
   showEzGmailSettings() {
-    console.log('Ez Gmail: Showing Ez Gmail settings panel');
+    console.log('Ez Gmail: ========== SHOWING EZ GMAIL SETTINGS ==========');
+    console.log('Ez Gmail: Current URL hash:', window.location.hash);
+    console.log('Ez Gmail: Current page title:', document.title);
     
     // Hide navigation bar if present
     const navBar = document.getElementById('ez-gmail-navigation');
     if (navBar) {
       navBar.style.display = 'none';
-      console.log('Ez Gmail: Navigation bar hidden');
+      console.log('Ez Gmail: ✓ Navigation bar hidden');
+    } else {
+      console.log('Ez Gmail: ℹ Navigation bar not found (may not be initialized)');
     }
     
     // Add quick links to header
+    console.log('Ez Gmail: Adding quick links to header...');
     this.addQuickLinks();
     
     // Find the settings content area
+    console.log('Ez Gmail: Searching for settings content area...');
     const contentArea = document.querySelector('.Tm.aeJ') || 
                        document.querySelector('[role="main"]') ||
                        document.querySelector('.nH.w-asV.aiw');
     
     if (!contentArea) {
-      console.log('Ez Gmail: Could not find settings content area');
+      console.error('Ez Gmail: ✗ FAILED - Could not find settings content area!');
+      console.log('Ez Gmail: Tried selectors: .Tm.aeJ, [role="main"], .nH.w-asV.aiw');
+      console.log('Ez Gmail: Available elements:', {
+        'Tm.aeJ': document.querySelectorAll('.Tm.aeJ').length,
+        '[role="main"]': document.querySelectorAll('[role="main"]').length,
+        'nH.w-asV.aiw': document.querySelectorAll('.nH.w-asV.aiw').length
+      });
       return;
     }
+    
+    console.log('Ez Gmail: ✓ Found settings content area:', contentArea.className);
 
     // Check if our panel already exists
     let settingsPanel = contentArea.querySelector('.ez-gmail-settings-panel');
@@ -852,17 +866,25 @@ class SettingsIntegration {
       </div>
     `;
 
+    console.log('Ez Gmail: Appending settings panel to content area...');
     contentArea.appendChild(settingsPanel);
+    console.log('Ez Gmail: ✓ Settings panel appended to DOM');
     
     // Add event listeners for settings
+    console.log('Ez Gmail: Attaching event listeners to settings controls...');
     this.attachSettingsListeners();
+    console.log('Ez Gmail: ✓ Event listeners attached');
     
     // Show navigation bar on this settings page
+    console.log('Ez Gmail: Showing navigation bar on settings tab...');
     this.showNavigationOnSettingsTab();
+    
+    console.log('Ez Gmail: ========== EZ GMAIL SETTINGS COMPLETE ==========');
   }
 
   // Attach event listeners to settings controls
   attachSettingsListeners() {
+    console.log('Ez Gmail: attachSettingsListeners() called');
     // Add hover effects to all labels
     const labels = document.querySelectorAll('.ez-setting-label');
     labels.forEach(label => {

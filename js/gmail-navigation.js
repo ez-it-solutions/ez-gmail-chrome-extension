@@ -834,6 +834,11 @@ class GmailNavigation {
       subtree: true
     });
     
+    // Register with cleanup manager
+    if (window.EzGmailCleanup) {
+      window.EzGmailCleanup.registerObserver(this.styleObserver, 'GmailNavigation - Style Observer');
+    }
+    
     console.log('Ez Gmail: Style protection active');
   }
   
@@ -1142,10 +1147,55 @@ class GmailNavigation {
         subtree: false, // Only watch direct children
         attributes: false
       });
+      
+      // Register with cleanup manager
+      if (window.EzGmailCleanup) {
+        window.EzGmailCleanup.registerObserver(this.observer, 'GmailNavigation - Main Observer');
+      }
+      
       console.log('Ez Gmail: DOM observer active on', target.className || target.tagName);
     } else {
       console.warn('Ez Gmail: Could not find Gmail container for observation');
     }
+  }
+
+  // Cleanup and destroy
+  destroy() {
+    console.log('Ez Gmail: Destroying GmailNavigation...');
+    
+    // Disconnect observers
+    if (this.observer) {
+      console.log('Ez Gmail: Disconnecting main observer');
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    
+    if (this.styleObserver) {
+      console.log('Ez Gmail: Disconnecting style observer');
+      this.styleObserver.disconnect();
+      this.styleObserver = null;
+    }
+    
+    // Clear timeouts
+    if (this.reinitTimeout) {
+      console.log('Ez Gmail: Clearing reinit timeout');
+      clearTimeout(this.reinitTimeout);
+      this.reinitTimeout = null;
+    }
+    
+    // Remove navigation bar from DOM
+    const navBar = document.getElementById('ez-gmail-navigation');
+    if (navBar && navBar.parentNode) {
+      console.log('Ez Gmail: Removing navigation bar from DOM');
+      navBar.parentNode.removeChild(navBar);
+    }
+    
+    // Clear references
+    this.navigationBar = null;
+    this.currentPage = null;
+    this.totalPages = null;
+    
+    console.log('Ez Gmail: GmailNavigation destroyed');
   }
 }
 
