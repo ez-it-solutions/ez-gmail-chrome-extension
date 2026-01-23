@@ -637,7 +637,7 @@ class TemplateUI {
   // Insert template with values
   async insertTemplate(template, values) {
     // Get template with variables replaced
-    const processedTemplate = this.templateManager.getTemplateWithValues(template.id, values);
+    const processedTemplate = await this.templateManager.getTemplateWithValues(template.id, values);
     
     // Increment usage count
     await this.templateManager.incrementUsage(template.id);

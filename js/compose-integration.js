@@ -223,7 +223,7 @@ class ComposeIntegration {
   }
 
   // Insert template into compose window
-  insertTemplateIntoCompose(composeWindow, template) {
+  async insertTemplateIntoCompose(composeWindow, template) {
     console.log('Ez Gmail: Inserting template into compose:', template.name);
     
     // Find subject field
@@ -240,6 +240,40 @@ class ComposeIntegration {
     
     // Show success notification
     this.templateUI.showNotification(`Template "${template.name}" inserted!`, 'success');
+    
+    // If template has placeholder, fetch real verse and update
+    if (template._hasPlaceholder && template._originalTemplate && this.templateUI.templateManager) {
+      console.log('Ez Gmail: Fetching actual verse to replace placeholder...');
+      
+      // Fetch the actual verse in the background
+      setTimeout(async () => {
+        try {
+          // Get the actual verse (this will take time)
+          const finalTemplate = {
+            ...template._originalTemplate,
+            subject: await this.templateUI.templateManager.replaceVariables(template._originalTemplate.subject, template._values || {}),
+            body: await this.templateUI.templateManager.replaceVariables(template._originalTemplate.body, template._values || {})
+          };
+          
+          // Find fields fresh (they might have changed)
+          const freshSubjectField = this.findSubjectField(composeWindow);
+          const freshBodyField = this.findBodyField(composeWindow);
+          
+          // Update the fields with the real verse
+          if (freshSubjectField && finalTemplate.subject) {
+            this.setFieldValue(freshSubjectField, finalTemplate.subject);
+          }
+          
+          if (freshBodyField && finalTemplate.body) {
+            this.setFieldValue(freshBodyField, finalTemplate.body);
+          }
+          
+          console.log('Ez Gmail: Verse loaded and updated!');
+        } catch (error) {
+          console.error('Ez Gmail: Error updating verse:', error);
+        }
+      }, 100); // Small delay to let Gmail settle
+    }
   }
 
   // Find subject field
@@ -277,6 +311,11 @@ class ComposeIntegration {
 
   // Set field value (works for both input and contenteditable)
   setFieldValue(field, value) {
+    if (!field || !value) {
+      console.warn('Ez Gmail: Cannot set field value - field or value is null');
+      return;
+    }
+    
     if (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA') {
       // Standard input field
       field.value = value;

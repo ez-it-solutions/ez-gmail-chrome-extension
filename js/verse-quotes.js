@@ -6,6 +6,88 @@ class VerseQuoteManager {
   constructor() {
     this.verses = this.initializeVerses();
     this.quotes = this.initializeQuotes();
+    this.religion = null;
+    this.theology = null;
+    this.loadReligionSettings();
+  }
+
+  // Load religion and theology settings
+  async loadReligionSettings() {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['ezReligion', 'ezTheology'], (result) => {
+          this.religion = result.ezReligion || 'Christianity';
+          this.theology = result.ezTheology || 'Southern Baptist';
+          console.log(`Ez Gmail: Religion set to ${this.religion}, Theology: ${this.theology}`);
+          resolve();
+        });
+      } else {
+        this.religion = 'Christianity';
+        this.theology = 'Southern Baptist';
+        resolve();
+      }
+    });
+  }
+
+  // Save religion and theology settings
+  async saveReligionSettings(religion, theology) {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({
+          ezReligion: religion,
+          ezTheology: theology
+        }, () => {
+          this.religion = religion;
+          this.theology = theology;
+          console.log(`Ez Gmail: Religion updated to ${religion}, Theology: ${theology}`);
+          resolve();
+        });
+      } else {
+        this.religion = religion;
+        this.theology = theology;
+        resolve();
+      }
+    });
+  }
+
+  // Get available theologies based on religion
+  getTheologies(religion = 'Christianity') {
+    const theologies = {
+      'Christianity': [
+        'Southern Baptist',
+        'Independent Baptist',
+        'Reformed Baptist',
+        'Methodist',
+        'Presbyterian',
+        'Lutheran',
+        'Pentecostal',
+        'Non-Denominational',
+        'Catholic',
+        'Orthodox',
+        'Anglican/Episcopal',
+        'Assemblies of God',
+        'Church of Christ',
+        'Nazarene',
+        'Evangelical Free'
+      ],
+      'Judaism': [
+        'Orthodox',
+        'Conservative',
+        'Reform',
+        'Reconstructionist'
+      ],
+      'Islam': [
+        'Sunni',
+        'Shia',
+        'Sufi'
+      ],
+      'Other': [
+        'Secular',
+        'Spiritual',
+        'Interfaith'
+      ]
+    };
+    return theologies[religion] || [];
   }
 
   // Initialize Bible verses database
@@ -110,6 +192,15 @@ class VerseQuoteManager {
         text: 'Go therefore and make disciples of all the nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit, teaching them to observe all things that I have commanded you; and lo, I am with you always, even to the end of the age.',
         reference: 'Matthew 28:19-20',
         version: 'NKJV'
+      },
+      
+      // 1 Thessalonians
+      '1thess-5:16-18': {
+        text: 'Rejoice always, pray without ceasing, in everything give thanks; for this is the will of God in Christ Jesus for you.',
+        reference: '1 Thessalonians 5:16-18',
+        version: 'NKJV',
+        theology: 'Southern Baptist',
+        theme: 'prayer, thanksgiving, joy'
       }
     };
   }
@@ -166,14 +257,140 @@ class VerseQuoteManager {
     return this.verses[normalized] || null;
   }
 
+  // Map our verse keys to API-compatible references
+  getApiReference(key) {
+    const referenceMap = {
+      '1cor-3:23': '1 Corinthians 3:23',
+      '1cor-10:31': '1 Corinthians 10:31',
+      '1cor-13:4-7': '1 Corinthians 13:4-7',
+      'phil-4:13': 'Philippians 4:13',
+      'phil-4:6-7': 'Philippians 4:6-7',
+      'prov-3:5-6': 'Proverbs 3:5-6',
+      'prov-16:3': 'Proverbs 16:3',
+      'prov-18:10': 'Proverbs 18:10',
+      'ps-23:1': 'Psalm 23:1',
+      'ps-46:1': 'Psalm 46:1',
+      'ps-119:105': 'Psalm 119:105',
+      'john-3:16': 'John 3:16',
+      'john-14:6': 'John 14:6',
+      'rom-8:28': 'Romans 8:28',
+      'rom-12:2': 'Romans 12:2',
+      'jer-29:11': 'Jeremiah 29:11',
+      'matt-28:19-20': 'Matthew 28:19-20',
+      '1thess-5:16-18': '1 Thessalonians 5:16-18'
+    };
+    return referenceMap[key] || key;
+  }
+
+  // Map translation codes to API-compatible versions
+  getApiTranslation(translation) {
+    const translationMap = {
+      'CSB': 'web',      // Web English Bible (closest to CSB available)
+      'ESV': 'web',      // ESV not available, use WEB
+      'NIV': 'web',      // NIV not available, use WEB
+      'NKJV': 'kjv',     // KJV is closest to NKJV
+      'KJV': 'kjv',
+      'NLT': 'web',      // NLT not available, use WEB
+      'NASB': 'web',     // NASB not available, use WEB
+      'AMP': 'web',      // AMP not available, use WEB
+      'MSG': 'web'       // MSG not available, use WEB
+    };
+    return translationMap[translation] || 'web';
+  }
+
   // Get verse of the day (changes daily)
-  getVerseOfTheDay() {
+  async getVerseOfTheDay() {
     const verseKeys = Object.keys(this.verses);
     const today = new Date();
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     const index = dayOfYear % verseKeys.length;
     const key = verseKeys[index];
-    return this.verses[key];
+    const defaultVerse = this.verses[key];
+    
+    // Get selected translation from storage
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['ezBibleTranslation', 'ezCachedVerses'], async (result) => {
+          const translation = result.ezBibleTranslation || 'CSB';
+          const cachedVerses = result.ezCachedVerses || {};
+          
+          // Create cache key
+          const cacheKey = `${key}_${translation}`;
+          
+          // If translation is NKJV and we have it stored, use our version
+          if (translation === 'NKJV') {
+            resolve(defaultVerse);
+            return;
+          }
+          
+          // Check cache first
+          if (cachedVerses[cacheKey]) {
+            console.log('Ez Gmail: Using cached verse:', cacheKey);
+            resolve(cachedVerses[cacheKey]);
+            return;
+          }
+          
+          // Try to fetch from API
+          try {
+            const apiReference = this.getApiReference(key);
+            const apiTranslation = this.getApiTranslation(translation);
+            const url = `https://bible-api.com/${encodeURIComponent(apiReference)}?translation=${apiTranslation}`;
+            
+            console.log('Ez Gmail: Fetching verse from API:', url);
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error('API request failed');
+            }
+            
+            const data = await response.json();
+            
+            // Extract verse text and clean it up
+            let verseText = data.text.trim();
+            // Remove verse numbers like [1], [2], etc.
+            verseText = verseText.replace(/\[\d+\]/g, '').trim();
+            // Remove extra whitespace
+            verseText = verseText.replace(/\s+/g, ' ').trim();
+            
+            const fetchedVerse = {
+              text: verseText,
+              reference: defaultVerse.reference,
+              version: translation,
+              cachedAt: Date.now()
+            };
+            
+            // Cache the verse
+            cachedVerses[cacheKey] = fetchedVerse;
+            chrome.storage.local.set({ ezCachedVerses: cachedVerses });
+            console.log('Ez Gmail: Verse cached:', cacheKey);
+            
+            resolve(fetchedVerse);
+          } catch (error) {
+            console.error('Ez Gmail: Error fetching verse from API:', error);
+            
+            // Try to find any cached version of this verse (any translation)
+            const anyCachedVersion = Object.keys(cachedVerses).find(k => k.startsWith(key + '_'));
+            if (anyCachedVersion) {
+              console.log('Ez Gmail: Using cached verse from different translation as fallback');
+              resolve({
+                ...cachedVerses[anyCachedVersion],
+                version: translation + ' (cached)'
+              });
+              return;
+            }
+            
+            // Final fallback to stored verse with updated version label
+            resolve({
+              ...defaultVerse,
+              version: translation + ' (offline)'
+            });
+          }
+        });
+      } else {
+        // Fallback if chrome.storage is not available
+        resolve(defaultVerse);
+      }
+    });
   }
 
   // Get random quote
@@ -202,13 +419,54 @@ class VerseQuoteManager {
     return `"${quote.text}"\n— ${quote.author}`;
   }
 
+  // Get cache statistics
+  async getCacheStats() {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['ezCachedVerses'], (result) => {
+          const cachedVerses = result.ezCachedVerses || {};
+          const count = Object.keys(cachedVerses).length;
+          const verses = Object.entries(cachedVerses).map(([key, verse]) => ({
+            key,
+            reference: verse.reference,
+            version: verse.version,
+            cachedAt: new Date(verse.cachedAt).toLocaleString()
+          }));
+          
+          resolve({
+            count,
+            verses
+          });
+        });
+      } else {
+        resolve({ count: 0, verses: [] });
+      }
+    });
+  }
+
+  // Clear verse cache
+  async clearCache() {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({ ezCachedVerses: {} }, () => {
+          console.log('Ez Gmail: Verse cache cleared');
+          resolve(true);
+        });
+      } else {
+        resolve(false);
+      }
+    });
+  }
+
   // Process special variables in text
-  processSpecialVariables(text) {
+  async processSpecialVariables(text) {
     let result = text;
 
     // Replace {{verseOfTheDay}}
-    const verseOfDay = this.getVerseOfTheDay();
-    result = result.replace(/\{\{verseOfTheDay\}\}/g, this.formatVerse(verseOfDay));
+    if (result.includes('{{verseOfTheDay}}')) {
+      const verseOfDay = await this.getVerseOfTheDay();
+      result = result.replace(/\{\{verseOfTheDay\}\}/g, this.formatVerse(verseOfDay));
+    }
 
     // Replace {{quoteOfTheDay}}
     const quoteOfDay = this.getQuoteOfTheDay();

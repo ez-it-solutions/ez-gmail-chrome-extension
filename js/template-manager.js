@@ -189,12 +189,12 @@ class TemplateManager {
   }
 
   // Replace variables in text
-  replaceVariables(text, values) {
+  async replaceVariables(text, values) {
     let result = text;
     
     // Process special variables (verses and quotes) first
     if (window.EzGmailVerseQuoteManager) {
-      result = window.EzGmailVerseQuoteManager.processSpecialVariables(result);
+      result = await window.EzGmailVerseQuoteManager.processSpecialVariables(result);
     }
     
     // Replace each variable with its value
@@ -211,14 +211,39 @@ class TemplateManager {
   }
 
   // Get template with variables replaced
-  getTemplateWithValues(id, values) {
+  async getTemplateWithValues(id, values) {
     const template = this.getTemplate(id);
     if (!template) return null;
 
+    // Check if template contains verseOfTheDay
+    const hasVerseOfDay = template.body.includes('{{verseOfTheDay}}') || 
+                          template.subject.includes('{{verseOfTheDay}}');
+    
+    if (hasVerseOfDay) {
+      // Return immediately with placeholder
+      const placeholderSubject = template.subject.replace(/\{\{verseOfTheDay\}\}/g, '[Loading verse...]');
+      const placeholderBody = template.body.replace(/\{\{verseOfTheDay\}\}/g, 
+        '"Loading today\'s verse..."\n— Please wait, fetching from Bible API');
+      
+      // Process other variables synchronously
+      const quickSubject = await this.replaceVariables(placeholderSubject, values);
+      const quickBody = await this.replaceVariables(placeholderBody, values);
+      
+      return {
+        ...template,
+        subject: quickSubject,
+        body: quickBody,
+        _hasPlaceholder: true,
+        _originalTemplate: template,
+        _values: values
+      };
+    }
+
+    // No verse of the day, process normally
     return {
       ...template,
-      subject: this.replaceVariables(template.subject, values),
-      body: this.replaceVariables(template.body, values)
+      subject: await this.replaceVariables(template.subject, values),
+      body: await this.replaceVariables(template.body, values)
     };
   }
 

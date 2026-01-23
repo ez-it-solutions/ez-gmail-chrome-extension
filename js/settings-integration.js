@@ -644,6 +644,84 @@ class SettingsIntegration {
             </div>
           </label>
           
+          <div style="padding: 12px; border-radius: 4px; background: #f8f9fa;">
+            <label style="display: block; margin-bottom: 16px;">
+              <div style="font-weight: 500; color: #202124; margin-bottom: 4px;">Religion</div>
+              <div style="font-size: 13px; color: #5f6368; margin-bottom: 8px;">Select your religious tradition</div>
+              <select id="ezReligion" style="
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #dadce0;
+                border-radius: 4px;
+                font-size: 14px;
+                color: #202124;
+                background: white;
+                cursor: pointer;
+              ">
+                <option value="Christianity">Christianity</option>
+                <option value="Judaism">Judaism</option>
+                <option value="Islam">Islam</option>
+                <option value="Other">Other/Secular</option>
+              </select>
+            </label>
+            
+            <label style="display: block; margin-bottom: 16px;">
+              <div style="font-weight: 500; color: #202124; margin-bottom: 4px;">Theology/Denomination</div>
+              <div style="font-size: 13px; color: #5f6368; margin-bottom: 8px;">Select your theological tradition (Default: Southern Baptist)</div>
+              <select id="ezTheology" style="
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #dadce0;
+                border-radius: 4px;
+                font-size: 14px;
+                color: #202124;
+                background: white;
+                cursor: pointer;
+              ">
+                <option value="Southern Baptist" selected>Southern Baptist</option>
+                <option value="Independent Baptist">Independent Baptist</option>
+                <option value="Reformed Baptist">Reformed Baptist</option>
+                <option value="Methodist">Methodist</option>
+                <option value="Presbyterian">Presbyterian</option>
+                <option value="Lutheran">Lutheran</option>
+                <option value="Pentecostal">Pentecostal</option>
+                <option value="Non-Denominational">Non-Denominational</option>
+                <option value="Catholic">Catholic</option>
+                <option value="Orthodox">Orthodox</option>
+                <option value="Anglican/Episcopal">Anglican/Episcopal</option>
+                <option value="Assemblies of God">Assemblies of God</option>
+                <option value="Church of Christ">Church of Christ</option>
+                <option value="Nazarene">Nazarene</option>
+                <option value="Evangelical Free">Evangelical Free</option>
+              </select>
+            </label>
+            
+            <label style="display: block; margin-bottom: 8px;">
+              <div style="font-weight: 500; color: #202124; margin-bottom: 4px;">Bible Translation</div>
+              <div style="font-size: 13px; color: #5f6368; margin-bottom: 8px;">Select your preferred Bible version for Verse of the Day</div>
+              <select id="ezBibleTranslation" style="
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #dadce0;
+                border-radius: 4px;
+                font-size: 14px;
+                color: #202124;
+                background: white;
+                cursor: pointer;
+              ">
+                <option value="CSB">CSB - Christian Standard Bible</option>
+                <option value="ESV">ESV - English Standard Version</option>
+                <option value="NIV">NIV - New International Version</option>
+                <option value="NKJV">NKJV - New King James Version</option>
+                <option value="KJV">KJV - King James Version</option>
+                <option value="NLT">NLT - New Living Translation</option>
+                <option value="NASB">NASB - New American Standard Bible</option>
+                <option value="AMP">AMP - Amplified Bible</option>
+                <option value="MSG">MSG - The Message</option>
+              </select>
+            </label>
+          </div>
+          
           <label class="ez-setting-label" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 12px; border-radius: 4px; transition: background 0.2s;">
             <input type="checkbox" id="ezQuoteEnabled" checked style="width: 18px; height: 18px; cursor: pointer;">
             <div>
@@ -736,6 +814,52 @@ class SettingsIntegration {
       });
     }
     
+    // Religion selector
+    const religionSelect = document.getElementById('ezReligion');
+    if (religionSelect) {
+      religionSelect.addEventListener('change', (e) => {
+        const religion = e.target.value;
+        chrome.storage.local.set({ ezReligion: religion });
+        console.log('Ez Gmail: Religion changed to:', religion);
+        
+        // Update theology options based on religion
+        this.updateTheologyOptions(religion);
+        
+        // Update VerseQuoteManager if available
+        if (window.EzGmailVerseQuoteManager) {
+          const theologySelect = document.getElementById('ezTheology');
+          const theology = theologySelect ? theologySelect.value : 'Southern Baptist';
+          window.EzGmailVerseQuoteManager.saveReligionSettings(religion, theology);
+        }
+      });
+    }
+    
+    // Theology selector
+    const theologySelect = document.getElementById('ezTheology');
+    if (theologySelect) {
+      theologySelect.addEventListener('change', (e) => {
+        const theology = e.target.value;
+        chrome.storage.local.set({ ezTheology: theology });
+        console.log('Ez Gmail: Theology changed to:', theology);
+        
+        // Update VerseQuoteManager if available
+        if (window.EzGmailVerseQuoteManager) {
+          const religionSelect = document.getElementById('ezReligion');
+          const religion = religionSelect ? religionSelect.value : 'Christianity';
+          window.EzGmailVerseQuoteManager.saveReligionSettings(religion, theology);
+        }
+      });
+    }
+    
+    // Bible translation selector
+    const bibleTranslation = document.getElementById('ezBibleTranslation');
+    if (bibleTranslation) {
+      bibleTranslation.addEventListener('change', (e) => {
+        chrome.storage.local.set({ ezBibleTranslation: e.target.value });
+        console.log('Ez Gmail: Bible translation changed to:', e.target.value);
+      });
+    }
+    
     // Navigation settings
     const navEnabled = document.getElementById('ezNavEnabled');
     if (navEnabled) {
@@ -746,12 +870,80 @@ class SettingsIntegration {
     }
 
     // Load saved settings
-    chrome.storage.local.get(['ezNavEnabled', 'ezNavDatePicker', 'ezNavPageNumbers', 'ezVerseEnabled', 'ezQuoteEnabled'], (result) => {
+    chrome.storage.local.get([
+      'ezNavEnabled', 'ezNavDatePicker', 'ezNavPageNumbers', 
+      'ezVerseEnabled', 'ezQuoteEnabled', 'ezBibleTranslation',
+      'ezReligion', 'ezTheology'
+    ], (result) => {
       if (result.ezNavEnabled !== undefined) {
         const checkbox = document.getElementById('ezNavEnabled');
         if (checkbox) checkbox.checked = result.ezNavEnabled;
       }
+      
+      // Load Religion (default to Christianity)
+      const religionSelect = document.getElementById('ezReligion');
+      if (religionSelect) {
+        religionSelect.value = result.ezReligion || 'Christianity';
+        // Update theology options based on loaded religion
+        this.updateTheologyOptions(result.ezReligion || 'Christianity');
+      }
+      
+      // Load Theology (default to Southern Baptist)
+      const theologySelect = document.getElementById('ezTheology');
+      if (theologySelect) {
+        theologySelect.value = result.ezTheology || 'Southern Baptist';
+      }
+      
+      // Load Bible translation (default to CSB)
+      const translationSelect = document.getElementById('ezBibleTranslation');
+      if (translationSelect) {
+        translationSelect.value = result.ezBibleTranslation || 'CSB';
+      }
     });
+  }
+
+  // Update theology options based on selected religion
+  updateTheologyOptions(religion) {
+    const theologySelect = document.getElementById('ezTheology');
+    if (!theologySelect) return;
+    
+    // Get theologies from VerseQuoteManager if available
+    let theologies = [];
+    if (window.EzGmailVerseQuoteManager) {
+      theologies = window.EzGmailVerseQuoteManager.getTheologies(religion);
+    } else {
+      // Fallback theologies
+      const theologyMap = {
+        'Christianity': [
+          'Southern Baptist', 'Independent Baptist', 'Reformed Baptist',
+          'Methodist', 'Presbyterian', 'Lutheran', 'Pentecostal',
+          'Non-Denominational', 'Catholic', 'Orthodox', 'Anglican/Episcopal',
+          'Assemblies of God', 'Church of Christ', 'Nazarene', 'Evangelical Free'
+        ],
+        'Judaism': ['Orthodox', 'Conservative', 'Reform', 'Reconstructionist'],
+        'Islam': ['Sunni', 'Shia', 'Sufi'],
+        'Other': ['Secular', 'Spiritual', 'Interfaith']
+      };
+      theologies = theologyMap[religion] || [];
+    }
+    
+    // Clear and repopulate options
+    theologySelect.innerHTML = '';
+    theologies.forEach(theology => {
+      const option = document.createElement('option');
+      option.value = theology;
+      option.textContent = theology;
+      theologySelect.appendChild(option);
+    });
+    
+    // Set default based on religion
+    if (religion === 'Christianity') {
+      theologySelect.value = 'Southern Baptist';
+    } else if (theologies.length > 0) {
+      theologySelect.value = theologies[0];
+    }
+    
+    console.log(`Ez Gmail: Updated theology options for ${religion}`);
   }
 
   // Show navigation bar on Ez Gmail settings tab

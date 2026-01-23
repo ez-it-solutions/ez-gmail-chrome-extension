@@ -11,7 +11,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://mail.google.com/*"
+    "https://mail.google.com/*",
+    "https://bible-api.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -40,6 +41,7 @@
         "js/template-library.js",
         "js/template-manager.js",
         "js/profile-manager.js",
+        "js/signature-manager.js",
         "js/template-ui.js",
         "js/compose-integration.js",
         "js/gmail-navigation.js",
