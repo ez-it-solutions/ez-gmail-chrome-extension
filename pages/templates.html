@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Templates - Ez Gmail</title>
+  <link rel="stylesheet" href="../css/templates.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      background: #f8f9fa;
+      color: #202124;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 400;
+      color: #202124;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 24px;
+      height: 40px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: #1765cc;
+      box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
+    }
+
+    .btn-secondary:hover {
+      background: #f8f9fa;
+    }
+
+    .content {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      min-height: 500px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      flex: 1;
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
+
+    .category-filter {
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      min-width: 180px;
+    }
+
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .template-card {
+      padding: 0;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: white;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .template-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #1a73e8, #34a853);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .template-card:hover {
+      border-color: #1a73e8;
+      box-shadow: 0 8px 24px rgba(26, 115, 232, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .template-card:hover::before {
+      opacity: 1;
+    }
+
+    .template-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+      padding: 20px 20px 0 20px;
+    }
+
+    .template-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .template-category {
+      display: inline-block;
+      padding: 5px 14px;
+      background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+      color: #1a73e8;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(26, 115, 232, 0.1);
+    }
+
+    .template-subject {
+      font-size: 14px;
+      color: #5f6368;
+      margin-bottom: 10px;
+      font-weight: 500;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .template-subject::before {
+      content: '✉';
+      font-size: 16px;
+      opacity: 0.6;
+    }
+
+    .template-preview {
+      font-size: 13px;
+      color: #80868b;
+      line-height: 1.6;
+      max-height: 65px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 20px 16px 20px;
+      position: relative;
+    }
+
+    .template-preview::after {
+      content: '';
+      position: absolute;
+      bottom: 16px;
+      right: 20px;
+      left: 20px;
+      height: 20px;
+      background: linear-gradient(to bottom, transparent, white);
+    }
+
+    .template-actions {
+      display: flex;
+      gap: 0;
+      margin-top: 0;
+      padding: 0;
+      border-top: 1px solid #f1f3f4;
+      background: #fafafa;
+    }
+
+    .template-action-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-right: 1px solid #e8eaed;
+      background: transparent;
+      color: #5f6368;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .template-action-btn:last-child {
+      border-right: none;
+    }
+
+    .template-action-btn:hover {
+      background: white;
+      color: #1a73e8;
+      font-weight: 600;
+    }
+
+    .template-action-btn:active {
+      background: #f1f3f4;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-text {
+      font-size: 18px;
+      color: #5f6368;
+      margin-bottom: 8px;
+    }
+
+    .empty-subtext {
+      font-size: 14px;
+      color: #80868b;
+      margin-bottom: 24px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .stat-item {
+      flex: 1;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a73e8;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📧 Email Templates</h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary" id="loadSamplesBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+          </svg>
+          Load Sample Templates
+        </button>
+        <button class="btn btn-secondary" id="reimportAllBtn" style="background: #ea4335; color: white;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+          Reimport All
+        </button>
+        <button class="btn" id="createTemplateBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Create Template
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="stats" id="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="totalTemplates">0</div>
+          <div class="stat-label">Total Templates</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalCategories">0</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="storageUsed">0%</div>
+          <div class="stat-label">Storage Used</div>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Search templates..."
+        />
+        <select class="category-filter" id="categoryFilter">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
+
+      <div class="templates-grid" id="templatesGrid">
+        <!-- Templates will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/verse-quotes.js"></script>
+  <script src="../js/template-library.js"></script>
+  <script src="../js/template-manager.js"></script>
+  <script src="../js/templates-page.js"></script>
+</body>
+</html>

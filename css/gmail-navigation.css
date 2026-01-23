@@ -1,0 +1,646 @@
+/* Ez Gmail - Gmail Navigation CSS
+ * Ez IT Solutions - http://www.Ez-IT-Solutions.com
+ * Styles for advanced page and date navigation
+ */
+
+/* Critical: Remove any Gmail pseudo-elements that interfere with our layout */
+#ez-gmail-navigation::before,
+#ez-gmail-navigation::after,
+#ez-gmail-navigation *::before,
+#ez-gmail-navigation *::after,
+div[data-ez-gmail="true"]::before,
+div[data-ez-gmail="true"]::after,
+div[data-ez-gmail="true"] *::before,
+div[data-ez-gmail="true"] *::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Navigation Bar */
+#ez-gmail-navigation.ez-gmail-nav-bar {
+  background: #f5f5f5 !important;
+  border-bottom: 1px solid #dadce0 !important;
+  padding: 8px 16px !important;
+  box-shadow: none !important;
+  z-index: 10 !important;  /* Lower z-index so Gmail dropdowns (z-index: 2000000000+) appear on top */
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: static !important;  /* Use static to avoid creating stacking context */
+  visibility: visible !important;
+  opacity: 1 !important;
+  
+  /* Initial state for animation */
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transform: translateY(-10px) !important;
+  box-shadow: none !important;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease-out,
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease-out !important;
+}
+
+/* Animated state - applied after insertion */
+#ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-loaded {
+  max-height: 200px !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Hiding animation - applied when viewing email */
+#ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-hiding {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  transform: translateY(-10px) !important;
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
+.ez-gmail-nav-bar {
+  background: #f5f5f5 !important;
+  border-bottom: 1px solid #dadce0 !important;
+  padding: 8px 16px !important;
+  box-shadow: none !important;
+  z-index: 10 !important;  /* Lower z-index so Gmail dropdowns appear on top */
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Ultra-specific container rules with maximum priority */
+div[data-ez-gmail="true"][id="ez-gmail-navigation"] .ez-nav-container {
+  all: revert !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+div[data-ez-gmail="true"] .ez-nav-container,
+#ez-gmail-navigation .ez-nav-container,
+.ez-gmail-nav-bar .ez-nav-container,
+.ez-nav-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+#ez-gmail-navigation .ez-nav-left,
+.ez-gmail-nav-bar .ez-nav-left,
+.ez-nav-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex: 1 !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important;
+  box-sizing: border-box !important;
+}
+
+#ez-gmail-navigation .ez-nav-right,
+.ez-gmail-nav-bar .ez-nav-right,
+.ez-nav-right {
+  display: flex !important;
+  align-items: center !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#ez-gmail-navigation .ez-nav-section,
+.ez-gmail-nav-bar .ez-nav-section,
+.ez-nav-section {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-direction: row !important;
+  box-sizing: border-box !important;
+}
+
+/* Navigation Buttons */
+.ez-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #5f6368;
+}
+
+.ez-nav-btn:hover:not(:disabled) {
+  background: #e8eaed;
+  color: #202124;
+}
+
+.ez-nav-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.ez-nav-btn svg {
+  pointer-events: none;
+}
+
+/* Primary Button */
+.ez-nav-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 36px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.ez-nav-btn-primary:hover {
+  background: #1765cc;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+/* Page Numbers */
+.ez-nav-pages {
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.ez-nav-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ez-nav-page-btn:hover {
+  background: #e8eaed;
+  color: #202124;
+}
+
+.ez-nav-page-btn.active {
+  background: #d3e3fd;
+  color: #1a73e8;
+  font-weight: 700;
+}
+
+.ez-nav-ellipsis {
+  padding: 0 8px;
+  color: #5f6368;
+  font-size: 14px;
+}
+
+/* Quick Jump */
+.ez-nav-jump {
+  padding-left: 16px;
+  border-left: 1px solid #dadce0;
+}
+
+.ez-nav-label {
+  font-size: 13px;
+  color: #5f6368;
+  font-weight: 500;
+}
+
+#ez-nav-jump-input {
+  width: 80px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+#ez-nav-jump-input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: none;
+}
+
+/* Modal */
+.ez-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ez-modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ez-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ez-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #202124;
+}
+
+.ez-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  color: #5f6368;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.ez-modal-close:hover {
+  background: #f8f9fa;
+  color: #202124;
+}
+
+.ez-modal-body {
+  padding: 24px;
+}
+
+/* Quick Dates */
+.ez-quick-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ez-date-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 16px;
+  border: 1px solid #dadce0;
+  background: white;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ez-date-btn:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+/* Divider */
+.ez-divider {
+  text-align: center;
+  color: #5f6368;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 16px 0;
+  position: relative;
+}
+
+.ez-divider::before,
+.ez-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 30px);
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.ez-divider::before {
+  left: 0;
+}
+
+.ez-divider::after {
+  right: 0;
+}
+
+/* Date Picker */
+.ez-date-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.ez-date-picker label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+  margin-bottom: 4px;
+}
+
+/* Date input row - date and dropdown on same line */
+.ez-date-input-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+#ez-date-input {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+#ez-date-mode {
+  flex: 1.5;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+/* Full-width search button at bottom of modal */
+.ez-search-btn-full {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 8px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#ez-date-input:focus,
+#ez-date-mode:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: none;
+}
+
+#ez-date-search-btn {
+  white-space: nowrap;
+}
+
+/* Month Picker */
+.ez-month-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.ez-month-picker label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+  margin-bottom: 4px;
+}
+
+.ez-month-input-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+#ez-month-select,
+#ez-year-select {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  background: white;
+  cursor: pointer;
+}
+
+#ez-month-select:focus,
+#ez-year-select:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ez-nav-container {
+    gap: 8px;
+  }
+  
+  .ez-nav-pages {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .ez-nav-jump,
+  .ez-nav-date {
+    border-left: none;
+    padding-left: 0;
+  }
+  
+  .ez-quick-dates {
+    flex-direction: column;
+  }
+  
+  .ez-date-btn {
+    min-width: 100%;
+  }
+  
+  .ez-date-picker {
+    gap: 16px;
+  }
+  
+  .ez-date-input-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  #ez-date-input,
+  #ez-date-mode {
+    width: 100%;
+  }
+}
+
+/* Dark Mode Support - Only apply when Gmail is actually in dark mode */
+body.darkmode .ez-gmail-nav-bar {
+  background: #2d2e30 !important;
+  border-bottom-color: #5f6368 !important;
+}
+
+body.darkmode #ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-loaded {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.darkmode #ez-gmail-navigation.ez-gmail-nav-bar.ez-nav-hiding {
+  box-shadow: none !important;
+}
+
+body.darkmode .ez-nav-btn,
+body.darkmode .ez-nav-page-btn {
+  color: #e8eaed;
+}
+
+body.darkmode .ez-nav-btn:hover:not(:disabled),
+body.darkmode .ez-nav-page-btn:hover {
+  background: #3c4043;
+  color: #e8eaed;
+}
+
+body.darkmode .ez-nav-page-btn.active {
+  background: #185abc;
+  color: #e8eaed;
+}
+
+body.darkmode .ez-nav-label,
+body.darkmode .ez-nav-ellipsis {
+  color: #9aa0a6;
+}
+
+body.darkmode #ez-nav-jump-input,
+body.darkmode #ez-date-input,
+body.darkmode #ez-date-mode {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+body.darkmode .ez-nav-jump {
+  border-left-color: #5f6368;
+}
+
+/* Dark Mode Modal */
+body.darkmode .ez-modal {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+body.darkmode .ez-modal-content {
+  background: #2d2e30;
+  color: #e8eaed;
+}
+
+body.darkmode .ez-modal-header {
+  border-bottom-color: #5f6368;
+}
+
+body.darkmode .ez-modal-header h3 {
+  color: #e8eaed;
+}
+
+body.darkmode .ez-modal-close {
+  color: #9aa0a6;
+}
+
+body.darkmode .ez-modal-close:hover {
+  background: #3c4043;
+  color: #e8eaed;
+}
+
+body.darkmode .ez-date-btn {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+body.darkmode .ez-date-btn:hover {
+  background: #5f6368;
+  border-color: #9aa0a6;
+}
+
+body.darkmode .ez-divider {
+  color: #9aa0a6;
+}
+
+body.darkmode .ez-divider::before,
+body.darkmode .ez-divider::after {
+  background: #5f6368;
+}
+
+body.darkmode .ez-date-picker label,
+body.darkmode .ez-month-picker label {
+  color: #e8eaed;
+}
+
+body.darkmode #ez-month-select,
+body.darkmode #ez-year-select {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #e8eaed;
+}

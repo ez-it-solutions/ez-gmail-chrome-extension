@@ -1,0 +1,720 @@
+/* Ez Gmail - Template System Styles */
+/* Ez IT Solutions - http://www.Ez-IT-Solutions.com */
+
+/* Template Insert Button in Compose Window - Gmail Style */
+.ez-template-insert-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 24px !important;
+  height: 36px !important;
+  background: #0b57d0 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 18px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15) !important;
+  z-index: 100 !important;
+  position: relative !important;
+  margin-right: 8px !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.25px !important;
+}
+
+.ez-template-insert-btn:hover {
+  background: #1a73e8 !important;
+  box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15) !important;
+}
+
+.ez-template-insert-btn:active {
+  background: #174ea6 !important;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15) !important;
+}
+
+.ez-template-insert-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+  fill: currentColor !important;
+}
+
+/* Template Modal */
+.ez-template-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10000 !important;
+  animation: ezFadeIn 0.2s ease-out !important;
+}
+
+/* Profile Management Modal - Higher z-index */
+#ez-profile-management-modal {
+  z-index: 10002 !important;
+}
+
+.ez-template-modal-content {
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+  width: 100% !important;
+  max-width: 720px !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: ezSlideUp 0.3s ease-out !important;
+  overflow: hidden !important;
+}
+
+@keyframes ezSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal Header */
+.ez-template-modal-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 24px 24px 20px 24px !important;
+  border-bottom: 1px solid #e8eaed !important;
+  background: white !important;
+  color: #202124 !important;
+}
+
+.ez-template-modal-header h2 {
+  margin: 0 !important;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+  color: #202124 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+}
+
+.ez-template-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.ez-template-import-btn,
+.ez-template-create-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 20px !important;
+  height: 36px !important;
+  background: #1a73e8 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 18px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15) !important;
+  letter-spacing: 0.25px !important;
+}
+
+.ez-template-import-btn:hover,
+.ez-template-create-btn:hover {
+  background: #1765cc !important;
+  box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15) !important;
+}
+
+.ez-template-import-btn:active,
+.ez-template-create-btn:active {
+  background: #174ea6 !important;
+}
+
+.ez-template-import-btn svg,
+.ez-template-create-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.ez-template-modal-close {
+  width: 40px !important;
+  height: 40px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #5f6368 !important;
+  font-size: 24px !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: all 0.15s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.ez-template-modal-close:hover {
+  background: #f1f3f4 !important;
+  color: #202124 !important;
+}
+
+/* Search and Filter Bar */
+.ez-template-search-bar {
+  display: flex !important;
+  gap: 12px !important;
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  background: #f8f9fa !important;
+}
+
+.ez-template-search-input {
+  flex: 1 !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  transition: border-color 0.2s !important;
+}
+
+.ez-template-search-input:focus {
+  outline: none !important;
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
+}
+
+.ez-template-category-filter {
+  height: 40px !important;
+  padding: 0 12px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  background: white !important;
+  cursor: pointer !important;
+  min-width: 150px !important;
+}
+
+/* Template List */
+.ez-template-list {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 16px 24px !important;
+}
+
+.ez-template-item {
+  padding: 16px !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 6px !important;
+  margin-bottom: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  background: white !important;
+}
+
+.ez-template-item:hover {
+  border-color: #667eea !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+.ez-template-item-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+.ez-template-item-name {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #202124 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+}
+
+.ez-template-item-category {
+  display: inline-block !important;
+  padding: 4px 12px !important;
+  background: #e8f0fe !important;
+  color: #1a73e8 !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.ez-template-item-subject {
+  font-size: 14px !important;
+  color: #5f6368 !important;
+  margin-bottom: 4px !important;
+  font-weight: 500 !important;
+}
+
+.ez-template-item-body {
+  font-size: 13px !important;
+  color: #80868b !important;
+  line-height: 1.4 !important;
+  max-height: 40px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important; /* Standard property for compatibility */
+  -webkit-box-orient: vertical !important;
+}
+
+.ez-template-item-meta {
+  display: flex !important;
+  gap: 16px !important;
+  margin-top: 8px !important;
+  font-size: 12px !important;
+  color: #80868b !important;
+}
+
+.ez-template-item-meta span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Empty State */
+.ez-template-empty {
+  text-align: center !important;
+  padding: 60px 20px !important;
+  color: #80868b !important;
+}
+
+.ez-template-empty-icon {
+  font-size: 48px !important;
+  margin-bottom: 16px !important;
+}
+
+.ez-template-empty-text {
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  color: #5f6368 !important;
+  margin-bottom: 8px !important;
+}
+
+.ez-template-empty-subtext {
+  font-size: 14px !important;
+  color: #80868b !important;
+  margin-bottom: 24px !important;
+}
+
+.ez-template-load-samples-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 24px !important;
+  height: 40px !important;
+  background: #1a73e8 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15) !important;
+  letter-spacing: 0.25px !important;
+  margin-top: 8px !important;
+}
+
+.ez-template-load-samples-btn:hover {
+  background: #1765cc !important;
+  box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15) !important;
+}
+
+.ez-template-load-samples-btn:active {
+  background: #174ea6 !important;
+}
+
+.ez-template-load-samples-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Variable Input Modal */
+.ez-variable-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10002 !important;
+  animation: ezFadeIn 0.2s ease-out !important;
+  padding: 20px !important;
+}
+
+.ez-variable-modal-content {
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+  width: 100% !important;
+  max-width: 540px !important;
+  animation: ezSlideUp 0.3s ease-out !important;
+  overflow: hidden !important;
+}
+
+.ez-variable-modal-header {
+  padding: 24px 24px 20px 24px !important;
+  border-bottom: 1px solid #e8eaed !important;
+  background: #f8f9fa !important;
+}
+
+.ez-variable-modal-header h3 {
+  margin: 0 !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  color: #202124 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+}
+
+.ez-variable-modal-body {
+  padding: 24px !important;
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+}
+
+.ez-variable-input-group {
+  margin-bottom: 20px !important;
+}
+
+.ez-variable-input-group:last-child {
+  margin-bottom: 0 !important;
+}
+
+.ez-variable-label {
+  display: block !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #3c4043 !important;
+  margin-bottom: 8px !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+}
+
+.ez-variable-input,
+.ez-variable-input:not(select) {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-family: Roboto, Arial, sans-serif !important;
+  transition: all 0.2s !important;
+  box-sizing: border-box !important;
+  background: white !important;
+}
+
+.ez-variable-input[type="date"] {
+  cursor: pointer !important;
+  color: #3c4043 !important;
+}
+
+.ez-variable-input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  transition: background 0.2s !important;
+}
+
+.ez-variable-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background: #f1f3f4 !important;
+}
+
+.ez-variable-input:focus {
+  outline: none !important;
+  border-color: #1a73e8 !important;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1) !important;
+}
+
+.ez-variable-input::placeholder {
+  color: #80868b !important;
+}
+
+.ez-variable-modal-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  padding: 20px 24px !important;
+  border-top: 1px solid #e8eaed !important;
+  background: #f8f9fa !important;
+}
+
+.ez-variable-btn {
+  padding: 0 24px !important;
+  height: 40px !important;
+  border: none !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  letter-spacing: 0.25px !important;
+}
+
+.ez-variable-btn-cancel {
+  background: transparent !important;
+  color: #1a73e8 !important;
+  border: 1px solid #dadce0 !important;
+}
+
+.ez-variable-btn-cancel:hover {
+  background: #f8f9fa !important;
+  border-color: #1a73e8 !important;
+}
+
+.ez-variable-btn-insert {
+  background: #1a73e8 !important;
+  color: white !important;
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15) !important;
+}
+
+.ez-variable-btn-insert:hover {
+  background: #1765cc !important;
+  box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15) !important;
+}
+
+.ez-variable-btn-insert:active {
+  background: #174ea6 !important;
+}
+
+/* Dark Mode Support */
+body.darkmode .ez-template-modal-content,
+body.darkmode .ez-variable-modal-content {
+  background: #2d2e30 !important;
+  color: #e8eaed !important;
+}
+
+body.darkmode .ez-template-modal-header {
+  border-bottom-color: #5f6368 !important;
+}
+
+body.darkmode .ez-template-search-bar {
+  background: #3c4043 !important;
+  border-bottom-color: #5f6368 !important;
+}
+
+body.darkmode .ez-template-search-input,
+body.darkmode .ez-template-category-filter,
+body.darkmode .ez-variable-input {
+  background: #3c4043 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+
+body.darkmode .ez-template-item {
+  background: #3c4043 !important;
+  border-color: #5f6368 !important;
+}
+
+body.darkmode .ez-template-item:hover {
+  border-color: #667eea !important;
+}
+
+body.darkmode .ez-template-item-name {
+  color: #e8eaed !important;
+}
+
+body.darkmode .ez-template-item-subject {
+  color: #9aa0a6 !important;
+}
+
+body.darkmode .ez-template-item-body,
+body.darkmode .ez-template-item-meta {
+  color: #80868b !important;
+}
+
+body.darkmode .ez-variable-modal-header,
+body.darkmode .ez-variable-modal-footer {
+  border-color: #5f6368 !important;
+}
+
+body.darkmode .ez-variable-label {
+  color: #e8eaed !important;
+}
+
+body.darkmode .ez-variable-btn-cancel {
+  background: #3c4043 !important;
+  color: #9aa0a6 !important;
+}
+
+body.darkmode .ez-variable-btn-cancel:hover {
+  background: #5f6368 !important;
+}
+
+body.darkmode .ez-variable-input[type="date"] {
+  color: #e8eaed !important;
+  color-scheme: dark !important;
+}
+
+body.darkmode .ez-variable-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important;
+}
+
+body.darkmode .ez-variable-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background: #5f6368 !important;
+}
+
+/* Profile Selector */
+.ez-profile-selector-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+  padding: 12px !important;
+  background: #f8f9fa !important;
+  border-radius: 8px !important;
+}
+
+.ez-profile-selector-container label {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #5f6368 !important;
+  margin: 0 !important;
+}
+
+.ez-profile-select {
+  flex: 1 !important;
+  min-width: 200px !important;
+  padding: 8px 12px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-family: Roboto, Arial, sans-serif !important;
+  background: white !important;
+  color: #3c4043 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ez-profile-select:hover {
+  border-color: #1a73e8 !important;
+}
+
+.ez-profile-select:focus {
+  outline: none !important;
+  border-color: #1a73e8 !important;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1) !important;
+}
+
+.ez-profile-manage-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 6px !important;
+  background: white !important;
+  color: #5f6368 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ez-profile-manage-btn:hover {
+  background: #f1f3f4 !important;
+  border-color: #1a73e8 !important;
+  color: #1a73e8 !important;
+}
+
+.ez-profile-manage-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Save as Profile Button */
+.ez-variable-btn-save-profile {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 16px !important;
+  height: 36px !important;
+  background: white !important;
+  color: #1a73e8 !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 18px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ez-variable-btn-save-profile:hover {
+  background: #f8f9fa !important;
+  border-color: #1a73e8 !important;
+}
+
+.ez-variable-btn-save-profile svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.ez-variable-modal-footer-right {
+  display: flex !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+
+/* Dark Mode - Profile Components */
+body.darkmode .ez-profile-selector-container {
+  background: #2d2e30 !important;
+}
+
+body.darkmode .ez-profile-selector-container label {
+  color: #9aa0a6 !important;
+}
+
+body.darkmode .ez-profile-select {
+  background: #3c4043 !important;
+  color: #e8eaed !important;
+  border-color: #5f6368 !important;
+}
+
+body.darkmode .ez-profile-select:hover,
+body.darkmode .ez-profile-select:focus {
+  border-color: #8ab4f8 !important;
+}
+
+body.darkmode .ez-profile-manage-btn {
+  background: #3c4043 !important;
+  border-color: #5f6368 !important;
+  color: #9aa0a6 !important;
+}
+
+body.darkmode .ez-profile-manage-btn:hover {
+  background: #5f6368 !important;
+  border-color: #8ab4f8 !important;
+  color: #8ab4f8 !important;
+}
+
+body.darkmode .ez-variable-btn-save-profile {
+  background: #3c4043 !important;
+  color: #8ab4f8 !important;
+  border-color: #5f6368 !important;
+}
+
+body.darkmode .ez-variable-btn-save-profile:hover {
+  background: #5f6368 !important;
+  border-color: #8ab4f8 !important;
+}

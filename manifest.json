@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "Ez Gmail",
+  "version": "2.1.0",
+  "description": "Enhance your Gmail experience with quick actions, templates, and productivity tools. v2.1 - Optimized Performance & Memory Management.",
+  "author": "Ez IT Solutions",
+  "homepage_url": "http://www.Ez-IT-Solutions.com",
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "https://bible-api.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": [
+        "js/settings.js",
+        "js/verse-quotes.js",
+        "js/verse-presets.js",
+        "js/template-library.js",
+        "js/template-manager.js",
+        "js/profile-manager.js",
+        "js/signature-manager.js",
+        "js/template-ui.js",
+        "js/compose-integration.js",
+        "js/gmail-navigation.js",
+        "js/settings-integration.js",
+        "js/content.js"
+      ],
+      "css": [
+        "css/gmail-enhancements.css",
+        "css/gmail-navigation.css",
+        "css/templates.css"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pages/settings.html", "css/*.css", "js/*.js"],
+      "matches": ["https://mail.google.com/*"]
+    }
+  ]
+}
