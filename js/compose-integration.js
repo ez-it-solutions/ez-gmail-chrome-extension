@@ -106,6 +106,11 @@ class ComposeIntegration {
       childList: true,
       subtree: true
     });
+    
+    // Register with cleanup manager
+    if (window.EzGmailCleanup) {
+      window.EzGmailCleanup.registerObserver(this.observer, 'ComposeIntegration');
+    }
   }
 
   // Inject template button into compose window
@@ -355,12 +360,16 @@ class ComposeIntegration {
 
   // Cleanup
   destroy() {
+    console.log('Ez Gmail: Destroying ComposeIntegration...');
+    
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
     }
     
     this.observedComposeWindows.clear();
+    
+    console.log('Ez Gmail: ComposeIntegration destroyed');
   }
 }
 

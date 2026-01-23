@@ -6,6 +6,7 @@ class SettingsIntegration {
   constructor() {
     this.settingsTabAdded = false;
     this.observer = null;
+    this.observers = []; // Track all observers for cleanup
   }
 
   // Initialize settings integration
@@ -275,6 +276,12 @@ class SettingsIntegration {
       childList: true,
       subtree: false
     });
+    
+    // Register with cleanup manager
+    this.observers.push(observer);
+    if (window.EzGmailCleanup) {
+      window.EzGmailCleanup.registerObserver(observer, 'SettingsIntegration - Sidebar Button');
+    }
     
     console.log('Ez Gmail: Sidebar button added successfully');
   }
@@ -1328,9 +1335,20 @@ class SettingsIntegration {
 
   // Cleanup
   destroy() {
+    console.log('Ez Gmail: Destroying SettingsIntegration...');
+    
     if (this.observer) {
       this.observer.disconnect();
+      this.observer = null;
     }
+    
+    // Disconnect all tracked observers
+    this.observers.forEach(observer => {
+      observer.disconnect();
+    });
+    this.observers = [];
+    
+    console.log('Ez Gmail: SettingsIntegration destroyed');
   }
 }
 

@@ -301,3 +301,48 @@ document.addEventListener('keydown', (e) => {
 });
 
 console.log("Ez Gmail keyboard shortcuts enabled (Ctrl+Shift+C for compose, Ctrl+Shift+F for search)");
+
+// Cleanup on page unload to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+  console.log('Ez Gmail: Page unloading, cleaning up...');
+  
+  // Destroy all components
+  if (composeIntegration && typeof composeIntegration.destroy === 'function') {
+    composeIntegration.destroy();
+  }
+  
+  if (settingsIntegration && typeof settingsIntegration.destroy === 'function') {
+    settingsIntegration.destroy();
+  }
+  
+  if (gmailNavigation && typeof gmailNavigation.destroy === 'function') {
+    gmailNavigation.destroy();
+  }
+  
+  if (templateUI && typeof templateUI.destroy === 'function') {
+    templateUI.destroy();
+  }
+  
+  // Run global cleanup manager
+  if (window.EzGmailCleanup) {
+    window.EzGmailCleanup.cleanupAll();
+  }
+  
+  console.log('Ez Gmail: Cleanup complete');
+});
+
+// Also register components with cleanup manager
+if (window.EzGmailCleanup) {
+  if (composeIntegration) {
+    window.EzGmailCleanup.registerComponent(composeIntegration, 'ComposeIntegration');
+  }
+  if (settingsIntegration) {
+    window.EzGmailCleanup.registerComponent(settingsIntegration, 'SettingsIntegration');
+  }
+  if (gmailNavigation) {
+    window.EzGmailCleanup.registerComponent(gmailNavigation, 'GmailNavigation');
+  }
+  if (templateUI) {
+    window.EzGmailCleanup.registerComponent(templateUI, 'TemplateUI');
+  }
+}
