@@ -2,6 +2,17 @@
 // Ez IT Solutions - http://www.Ez-IT-Solutions.com
 // Dynamic verse lookup and quote rotation
 
+// Polyfill for replaceAll (for older browsers or external code)
+if (!String.prototype.replaceAll) {
+  String.prototype.replaceAll = function(search, replacement) {
+    console.log('Ez Gmail: Using replaceAll polyfill');
+    if (search instanceof RegExp) {
+      return this.replace(search, replacement);
+    }
+    return this.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replacement);
+  };
+}
+
 class VerseQuoteManager {
   constructor() {
     this.verses = this.initializeVerses();
