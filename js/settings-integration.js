@@ -7,6 +7,10 @@ class SettingsIntegration {
     this.settingsTabAdded = false;
     this.observer = null;
     this.observers = []; // Track all observers for cleanup
+    this.protectionObserver = null; // Track content protection observer
+    this.ezGmailSettingsActive = false; // Track if Ez Gmail settings are currently showing
+    this.lastShowSettingsTime = 0; // Rate limiting for showEzGmailSettings
+    this.enforcementInterval = null; // Interval to enforce hash and tab state
   }
 
   // Initialize settings integration
@@ -186,7 +190,7 @@ class SettingsIntegration {
           console.log('Ez Gmail: Switch signature clicked');
         } else if (action === 'settings') {
           window.location.hash = '#settings/ezgmail';
-          setTimeout(() => this.showEzGmailSettings(), 100);
+          // hashchange event will handle showing the panel
         }
         
         // Hide menu
@@ -246,7 +250,7 @@ class SettingsIntegration {
     // Add click handler (goes directly to settings)
     ezButton.addEventListener('click', () => {
       window.location.hash = '#settings/ezgmail';
-      setTimeout(() => this.showEzGmailSettings(), 100);
+      // hashchange event will handle showing the panel
     });
 
     // Set parent container to relative positioning
@@ -368,7 +372,7 @@ class SettingsIntegration {
       ezTab.setAttribute('tabindex', '0');
       
       window.location.hash = '#settings/ezgmail';
-      setTimeout(() => this.showEzGmailSettings(), 100);
+      // hashchange event will handle showing the panel
     });
 
     // Insert BEFORE existing div.dJ element
@@ -475,24 +479,46 @@ class SettingsIntegration {
 
   // Show Ez Gmail settings panel
   showEzGmailSettings() {
+    // CRITICAL: Set flag IMMEDIATELY to prevent race conditions
+    this.ezGmailSettingsActive = true;
+    console.log('Ez Gmail: ✓ Ez Gmail settings marked as ACTIVE (at start)');
+    
+    // Rate limiting: Don't call this more than once per 200ms
+    const now = Date.now();
+    if (now - this.lastShowSettingsTime < 200) {
+      console.log('Ez Gmail: ⚠ Rate limited - showEzGmailSettings called too soon, skipping');
+      return;
+    }
+    this.lastShowSettingsTime = now;
+    
     console.log('Ez Gmail: ========== SHOWING EZ GMAIL SETTINGS ==========');
     console.log('Ez Gmail: Current URL hash:', window.location.hash);
     console.log('Ez Gmail: Current page title:', document.title);
     
     // CRITICAL: Deactivate all other tabs and activate only Ez Gmail tab
-    console.log('Ez Gmail: Deactivating all other tabs...');
+    console.log('Ez Gmail: Searching for tabs...');
+    const tabsContainer = document.querySelector('.fY');
+    if (!tabsContainer) {
+      console.warn('Ez Gmail: ⚠ Tabs container (.fY) not found!');
+    } else {
+      console.log('Ez Gmail: ✓ Tabs container found');
+    }
+    
     const allTabs = document.querySelectorAll('.fY .J-J5-Ji');
+    console.log(`Ez Gmail: Found ${allTabs.length} total tabs`);
     let ezGmailTabFound = false;
     
-    allTabs.forEach(tab => {
+    allTabs.forEach((tab, index) => {
       const isEzGmailTab = tab.classList.contains('ez-gmail-horizontal-tab');
+      const tabText = tab.textContent ? tab.textContent.trim() : '(no text)';
+      console.log(`Ez Gmail: Tab ${index}: "${tabText}" - Ez Gmail: ${isEzGmailTab}`);
       
       if (isEzGmailTab) {
         // Activate Ez Gmail tab
         tab.classList.add('aKh');
         tab.setAttribute('aria-selected', 'true');
         tab.setAttribute('tabindex', '0');
-        tab.style.color = '#1a73e8';
+        tab.style.setProperty('color', '#1a73e8', 'important');
         ezGmailTabFound = true;
         console.log('Ez Gmail: ✓ Ez Gmail tab activated');
       } else {
@@ -505,16 +531,23 @@ class SettingsIntegration {
     
     if (!ezGmailTabFound) {
       console.warn('Ez Gmail: ⚠ Ez Gmail tab not found in tab list!');
+      console.log('Ez Gmail: Attempting to find tab by other selectors...');
+      const ezTab = document.querySelector('.ez-gmail-horizontal-tab');
+      if (ezTab) {
+        const tabText = ezTab.textContent ? ezTab.textContent.trim() : '(no text)';
+        console.log(`Ez Gmail: ✓ Found Ez Gmail tab by direct selector: "${tabText}"`);
+        ezTab.classList.add('aKh');
+        ezTab.setAttribute('aria-selected', 'true');
+        ezTab.setAttribute('tabindex', '0');
+        ezTab.style.setProperty('color', '#1a73e8', 'important');
+        ezGmailTabFound = true;
+      } else {
+        console.error('Ez Gmail: ✗ Ez Gmail tab not found anywhere!');
+      }
     }
     
-    // Hide navigation bar if present
-    const navBar = document.getElementById('ez-gmail-navigation');
-    if (navBar) {
-      navBar.style.display = 'none';
-      console.log('Ez Gmail: ✓ Navigation bar hidden');
-    } else {
-      console.log('Ez Gmail: ℹ Navigation bar not found (may not be initialized)');
-    }
+    // Don't hide navigation bar on settings - it's part of our UI
+    console.log('Ez Gmail: Keeping navigation bar visible on settings page');
     
     // Add quick links to header
     console.log('Ez Gmail: Adding quick links to header...');
@@ -576,14 +609,33 @@ class SettingsIntegration {
     
     // Hide existing Gmail content instead of clearing it
     console.log('Ez Gmail: Hiding Gmail content children...');
+    
+    // First, collapse the content area AND its parent containers
+    contentArea.style.setProperty('min-height', '0', 'important');
+    contentArea.style.setProperty('padding', '0', 'important');
+    
+    // Also collapse parent .nH container
+    const parentContainer = contentArea.closest('.nH');
+    if (parentContainer) {
+      parentContainer.style.setProperty('min-height', '0', 'important');
+      parentContainer.style.setProperty('padding-top', '0', 'important');
+      parentContainer.style.setProperty('padding-bottom', '0', 'important');
+      console.log('Ez Gmail: ✓ Collapsed parent container padding');
+    }
+    
     let hiddenCount = 0;
     Array.from(contentArea.children).forEach(child => {
       if (!child.classList.contains('ez-gmail-settings-panel')) {
-        child.style.display = 'none';
-        child.style.visibility = 'hidden';
-        child.style.opacity = '0';
-        child.style.position = 'absolute';
-        child.style.zIndex = '-1';
+        // Use display:none and height:0 to completely collapse the element
+        child.style.setProperty('display', 'none', 'important');
+        child.style.setProperty('height', '0', 'important');
+        child.style.setProperty('min-height', '0', 'important');
+        child.style.setProperty('max-height', '0', 'important');
+        child.style.setProperty('visibility', 'hidden', 'important');
+        child.style.setProperty('opacity', '0', 'important');
+        child.style.setProperty('position', 'absolute', 'important');
+        child.style.setProperty('z-index', '-9999', 'important');
+        child.style.setProperty('overflow', 'hidden', 'important');
         child.setAttribute('data-ez-hidden', 'true');
         hiddenCount++;
       }
@@ -930,73 +982,166 @@ class SettingsIntegration {
     this.attachSettingsListeners();
     console.log('Ez Gmail: ✓ Event listeners attached');
     
-    // Show navigation bar on this settings page
-    console.log('Ez Gmail: Showing navigation bar on settings tab...');
-    this.showNavigationOnSettingsTab();
+    // Don't show navigation bar on settings page - it doesn't fit the layout
+    console.log('Ez Gmail: Navigation bar will remain hidden on settings page');
     
     // CRITICAL: Protect our panel from Gmail interference
     console.log('Ez Gmail: Setting up content protection...');
     this.protectEzGmailContent(contentArea, settingsPanel);
     
+    // Start enforcement interval to maintain hash and tab state
+    this.startEnforcement();
+    
     console.log('Ez Gmail: ========== EZ GMAIL SETTINGS COMPLETE ==========');
+  }
+
+  // Start aggressive enforcement of hash and tab state
+  startEnforcement() {
+    // Clear any existing interval
+    if (this.enforcementInterval) {
+      clearInterval(this.enforcementInterval);
+    }
+    
+    // Enforce immediately
+    this.enforceHashAndTab();
+    
+    // Set up MutationObserver to watch tabs for changes
+    const tabsContainer = document.querySelector('.fY');
+    if (tabsContainer) {
+      const tabObserver = new MutationObserver(() => {
+        if (this.ezGmailSettingsActive) {
+          this.enforceTabState();
+        }
+      });
+      
+      tabObserver.observe(tabsContainer, {
+        attributes: true,
+        attributeFilter: ['class', 'aria-selected'],
+        subtree: true
+      });
+      
+      this.observers.push(tabObserver);
+      if (window.EzGmailCleanup) {
+        window.EzGmailCleanup.registerObserver(tabObserver, 'SettingsIntegration - Tab State Observer');
+      }
+      console.log('Ez Gmail: ✓ Started tab mutation observer');
+    }
+    
+    // AGGRESSIVE: Enforce hash every 300ms to fight Gmail
+    this.enforcementInterval = setInterval(() => {
+      if (!this.ezGmailSettingsActive) {
+        clearInterval(this.enforcementInterval);
+        this.enforcementInterval = null;
+        return;
+      }
+      
+      // Force hash to stay at /ezgmail
+      if (window.location.hash === '#settings' || window.location.hash === '#settings/') {
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', '#settings/ezgmail');
+        }
+      }
+      
+      this.enforceHashAndTab();
+    }, 300);
+    
+    console.log('Ez Gmail: ✓ Started aggressive enforcement interval (300ms)');
+  }
+
+  // Enforce hash and tab state together
+  enforceHashAndTab() {
+    // DON'T enforce hash - let Gmail have it at #settings
+    // Our protection observer will keep content visible
+    
+    // Only enforce tab state
+    this.enforceTabState();
+    
+    // Ensure OUR navigation bar stays hidden on settings
+    const navBar = document.getElementById('ez-gmail-navigation');
+    if (navBar && navBar.style.display !== 'none') {
+      navBar.style.setProperty('display', 'none', 'important');
+    }
   }
 
   // Protect Ez Gmail content from Gmail interference
   protectEzGmailContent(contentArea, settingsPanel) {
-    // Create observer to watch for Gmail trying to restore its content
-    const protectionObserver = new MutationObserver((mutations) => {
-      mutations.forEach(mutation => {
-        // Check if Gmail is trying to show its content
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === 1 && !node.classList.contains('ez-gmail-settings-panel')) {
-            console.log('Ez Gmail: ⚠ Gmail trying to add content, hiding it...');
-            node.style.display = 'none';
-            node.style.visibility = 'hidden';
-            node.style.opacity = '0';
-            node.style.position = 'absolute';
-            node.style.zIndex = '-1';
-          }
-        });
-        
-        // Check if our panel was removed
-        if (!document.querySelector('.ez-gmail-settings-panel')) {
-          console.log('Ez Gmail: ⚠ Our panel was removed! Re-adding...');
-          if (contentArea && settingsPanel) {
-            contentArea.appendChild(settingsPanel);
-          }
-        }
-        
-        // Check if Gmail unhid its content
-        Array.from(contentArea.children).forEach(child => {
-          if (!child.classList.contains('ez-gmail-settings-panel')) {
-            if (child.style.display !== 'none') {
-              console.log('Ez Gmail: ⚠ Gmail unhid content, re-hiding...');
-              child.style.display = 'none';
-              child.style.visibility = 'hidden';
-              child.style.opacity = '0';
-              child.style.position = 'absolute';
-              child.style.zIndex = '-1';
-            }
-          }
-        });
-      });
-    });
-    
-    // Start observing
-    protectionObserver.observe(contentArea, {
-      childList: true,
-      subtree: false,
-      attributes: true,
-      attributeFilter: ['style']
-    });
-    
-    // Track this observer for cleanup
-    this.observers.push(protectionObserver);
-    if (window.EzGmailCleanup) {
-      window.EzGmailCleanup.registerObserver(protectionObserver, 'SettingsIntegration - Content Protection');
+    // Disconnect existing protection observer if any
+    if (this.protectionObserver) {
+      console.log('Ez Gmail: Disconnecting existing protection observer...');
+      try {
+        this.protectionObserver.disconnect();
+      } catch (e) {
+        console.warn('Ez Gmail: Error disconnecting old observer:', e);
+      }
+      this.protectionObserver = null;
     }
     
-    console.log('Ez Gmail: ✓ Content protection active');
+    // Validate inputs
+    if (!contentArea || !settingsPanel) {
+      console.error('Ez Gmail: Cannot protect content - missing contentArea or settingsPanel');
+      return;
+    }
+    
+    // Create NEW observer to watch for Gmail trying to restore its content
+    try {
+      this.protectionObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+          // Check if Gmail is trying to show its content
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1 && !node.classList.contains('ez-gmail-settings-panel')) {
+              console.log('Ez Gmail: Gmail trying to add content, hiding it...');
+              node.style.setProperty('display', 'none', 'important');
+              node.style.setProperty('height', '0', 'important');
+              node.style.setProperty('min-height', '0', 'important');
+              node.style.setProperty('visibility', 'hidden', 'important');
+              node.style.setProperty('opacity', '0', 'important');
+              node.style.setProperty('position', 'absolute', 'important');
+              node.style.setProperty('z-index', '-9999', 'important');
+            }
+          });
+          
+          // Check if our panel was removed
+          if (!document.querySelector('.ez-gmail-settings-panel')) {
+            console.log('Ez Gmail: Our panel was removed! Re-adding...');
+            if (contentArea && settingsPanel && contentArea.isConnected) {
+              contentArea.appendChild(settingsPanel);
+            }
+          }
+          
+          // Check if Gmail unhid its content
+          Array.from(contentArea.children).forEach(child => {
+            if (!child.classList.contains('ez-gmail-settings-panel')) {
+              if (child.style.display !== 'none') {
+                console.log('Ez Gmail: ⚠ Gmail unhid content, re-hiding...');
+                child.style.display = 'none';
+                child.style.visibility = 'hidden';
+                child.style.opacity = '0';
+                child.style.position = 'absolute';
+                child.style.zIndex = '-1';
+              }
+            }
+          });
+        });
+      });
+      
+      // Start observing
+      this.protectionObserver.observe(contentArea, {
+        childList: true,
+        subtree: false,
+        attributes: true,
+        attributeFilter: ['style']
+      });
+      
+      // Track this observer for cleanup
+      this.observers.push(this.protectionObserver);
+      if (window.EzGmailCleanup) {
+        window.EzGmailCleanup.registerObserver(this.protectionObserver, 'SettingsIntegration - Content Protection');
+      }
+      
+      console.log('Ez Gmail: ✓ Content protection active');
+    } catch (error) {
+      console.error('Ez Gmail: Error setting up content protection:', error);
+    }
   }
 
   // Attach event listeners to settings controls
@@ -1366,6 +1511,30 @@ class SettingsIntegration {
 
   // Restore original Gmail settings content
   restoreOriginalContent() {
+    console.log('Ez Gmail: restoreOriginalContent() called');
+    
+    // Mark Ez Gmail settings as inactive FIRST
+    this.ezGmailSettingsActive = false;
+    console.log('Ez Gmail: ✓ Ez Gmail settings marked as INACTIVE');
+    
+    // Stop enforcement interval
+    if (this.enforcementInterval) {
+      clearInterval(this.enforcementInterval);
+      this.enforcementInterval = null;
+      console.log('Ez Gmail: ✓ Stopped enforcement interval');
+    }
+    
+    // Disconnect protection observer
+    if (this.protectionObserver) {
+      console.log('Ez Gmail: Disconnecting protection observer');
+      try {
+        this.protectionObserver.disconnect();
+        this.protectionObserver = null;
+      } catch (e) {
+        console.warn('Ez Gmail: Error disconnecting protection observer:', e);
+      }
+    }
+    
     // Only restore if we're on a settings page
     if (!window.location.hash.includes('settings')) {
       console.log('Ez Gmail: Not on settings page, skipping restore');
@@ -1390,93 +1559,178 @@ class SettingsIntegration {
       panel.style.display = 'none';
     });
     
-    // Show navigation bar if it was hidden
-    const navBar = document.getElementById('ez-gmail-navigation');
-    if (navBar) {
-      navBar.style.display = '';
-      console.log('Ez Gmail: Navigation bar restored');
+    // Don't restore navigation bar - it should stay hidden on ALL settings pages
+    console.log('Ez Gmail: Navigation bar stays hidden (settings page)');
+    
+    // Restore content area styles by removing inline style properties
+    contentArea.style.removeProperty('min-height');
+    contentArea.style.removeProperty('padding');
+    contentArea.style.removeProperty('padding-top');
+    contentArea.style.removeProperty('padding-bottom');
+    
+    // Restore parent container styles
+    const parentContainer = contentArea.closest('.nH');
+    if (parentContainer) {
+      parentContainer.style.removeProperty('min-height');
+      parentContainer.style.removeProperty('padding');
+      parentContainer.style.removeProperty('padding-top');
+      parentContainer.style.removeProperty('padding-bottom');
+      console.log('Ez Gmail: ✓ Restored parent container styles');
     }
     
-    // Unhide all Gmail content that we previously hid
-    const hiddenElements = contentArea.querySelectorAll('[data-ez-hidden="true"]');
-    hiddenElements.forEach(element => {
-      element.style.display = '';
-      element.removeAttribute('data-ez-hidden');
-      console.log('Ez Gmail: Unhid Gmail content element');
+    // If styles still persist, force remove the entire style attribute and re-add non-ez styles
+    if (parentContainer && parentContainer.style.minHeight === '0px') {
+      const existingStyles = parentContainer.getAttribute('style');
+      if (existingStyles && existingStyles.includes('min-height')) {
+        // Clear problematic styles
+        parentContainer.style.cssText = existingStyles
+          .replace(/min-height:\s*0px\s*!important;?/gi, '')
+          .replace(/padding(-top|-bottom)?:\s*0px\s*!important;?/gi, '');
+        console.log('Ez Gmail: ✓ Force-cleared persistent styles');
+      }
+    }
+    
+    // Unhide ALL Gmail content that we previously hid
+    console.log('Ez Gmail: Restoring all hidden Gmail content...');
+    Array.from(contentArea.children).forEach(child => {
+      if (!child.classList.contains('ez-gmail-settings-panel')) {
+        // Restore ALL styles we modified
+        child.style.removeProperty('display');
+        child.style.removeProperty('height');
+        child.style.removeProperty('min-height');
+        child.style.removeProperty('max-height');
+        child.style.removeProperty('visibility');
+        child.style.removeProperty('opacity');
+        child.style.removeProperty('position');
+        child.style.removeProperty('z-index');
+        child.style.removeProperty('overflow');
+        child.removeAttribute('data-ez-hidden');
+      }
     });
     
-    console.log('Ez Gmail: Gmail content restored, letting Gmail handle navigation');
+    console.log('Ez Gmail: ✓ Gmail content restored, letting Gmail handle navigation');
+  }
+
+  // Enforce our tab's active state
+  enforceTabState() {
+    const ezTab = document.querySelector('.ez-gmail-horizontal-tab');
+    if (!ezTab) return;
+    
+    let changed = false;
+    
+    // Deactivate all other tabs AGGRESSIVELY
+    const allTabs = document.querySelectorAll('.fY .J-J5-Ji');
+    allTabs.forEach(tab => {
+      if (tab.classList.contains('ez-gmail-horizontal-tab')) {
+        // Activate our tab - let aKh class handle the styling
+        if (!tab.classList.contains('aKh')) {
+          tab.classList.add('aKh');
+          changed = true;
+        }
+        tab.setAttribute('aria-selected', 'true');
+        tab.setAttribute('tabindex', '0');
+        // Don't force box-shadow - let Gmail's aKh class handle it
+        tab.style.removeProperty('box-shadow');
+      } else {
+        // Deactivate other tabs FORCEFULLY
+        if (tab.classList.contains('aKh')) {
+          tab.classList.remove('aKh');
+          changed = true;
+        }
+        tab.setAttribute('aria-selected', 'false');
+        tab.setAttribute('tabindex', '-1');
+        tab.style.removeProperty('color');
+        tab.style.removeProperty('box-shadow');
+      }
+    });
+    
+    if (changed) {
+      console.log('Ez Gmail: ✓ Enforced Ez Gmail tab active state');
+    }
   }
 
   // Monitor for navigation to settings
   monitorSettingsNavigation() {
-    // Track if we're intentionally on Ez Gmail settings
-    let onEzGmailSettings = false;
-    let isRestoringHash = false;
-    
-    // Watch for hash changes
+    // Simple hash monitoring - just watch URL and react
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash;
       console.log('Ez Gmail: Hash changed to:', hash);
       
-      // If we're in the middle of restoring the hash, ignore this event
-      if (isRestoringHash) {
-        isRestoringHash = false;
-        console.log('Ez Gmail: Ignoring hash change (we caused it)');
-        return;
+      // Add settings tab if we're on any settings page
+      if (hash.includes('settings') && !this.settingsTabAdded) {
+        setTimeout(() => this.waitForSettingsPage(), 500);
       }
       
-      if (hash.includes('settings')) {
-        if (!this.settingsTabAdded) {
-          setTimeout(() => this.waitForSettingsPage(), 500);
-        }
+      // SIMPLE LOGIC: Show our panel if hash contains 'ezgmail', hide otherwise
+      if (hash.includes('ezgmail')) {
+        console.log('Ez Gmail: ✓ Hash contains ezgmail - showing our panel');
+        setTimeout(() => this.showEzGmailSettings(), 100);
+      } else if (hash === '#settings' && this.ezGmailSettingsActive) {
+        // Gmail stripped /ezgmail from URL but our panel is active
+        // DON'T fight the hash - just maintain visibility
+        console.log('Ez Gmail: ⚠ Gmail stripped /ezgmail - maintaining visibility without fighting');
         
-        // Check if we're on Ez Gmail settings specifically
-        if (hash.includes('settings/ezgmail')) {
-          console.log('Ez Gmail: Navigated to Ez Gmail settings, showing panel');
-          onEzGmailSettings = true;
-          setTimeout(() => this.showEzGmailSettings(), 100);
-        } else {
-          // Check if our tab is still active (user clicked our tab, not another tab)
-          const ezTab = document.querySelector('.ez-gmail-horizontal-tab');
-          const isEzTabActive = ezTab && ezTab.classList.contains('aKh');
+        // Just ensure our tab stays active and content visible
+        // The protection observer will keep our panel visible
+        this.enforceTabState();
+      } else if (hash.includes('settings')) {
+        // On other settings pages (like #settings/general, #settings/labels) - hide our panel
+        console.log('Ez Gmail: On other settings page - hiding our panel');
+        this.restoreOriginalContent();
+        
+        // Also restore content area AND parent container styles
+        const contentArea = document.querySelector('.Tm.aeJ') || 
+                           document.querySelector('[role="main"]') ||
+                           document.querySelector('.nH.w-asV.aiw');
+        if (contentArea) {
+          contentArea.style.removeProperty('min-height');
+          contentArea.style.removeProperty('padding');
           
-          if (isEzTabActive && hash === '#settings') {
-            // Gmail reset the hash but our tab is still active - FIGHT BACK!
-            console.log('Ez Gmail: ⚠ Gmail tried to reset hash! Fighting back...');
-            onEzGmailSettings = true;
-            
-            // Immediately restore our hash
-            isRestoringHash = true;
-            window.location.hash = '#settings/ezgmail';
-            console.log('Ez Gmail: ✓ Hash restored to #settings/ezgmail');
-            
-            // Re-show our panel to fight Gmail's interference
-            setTimeout(() => {
-              console.log('Ez Gmail: Re-showing panel after Gmail interference');
-              this.showEzGmailSettings();
-            }, 50);
-          } else {
-            // On other settings pages - restore original content and deactivate our tab
-            console.log('Ez Gmail: Navigated to other settings page:', hash);
-            onEzGmailSettings = false;
-            this.restoreOriginalContent();
-            
-            // Deactivate our tab
-            if (ezTab) {
-              ezTab.classList.remove('aKh');
-              ezTab.setAttribute('aria-selected', 'false');
-              ezTab.setAttribute('tabindex', '-1');
-            }
+          const parentContainer = contentArea.closest('.nH');
+          if (parentContainer) {
+            parentContainer.style.removeProperty('min-height');
+            parentContainer.style.removeProperty('padding-top');
+            parentContainer.style.removeProperty('padding-bottom');
           }
+          console.log('Ez Gmail: ✓ Restored content area styles for other settings page');
         }
       } else {
-        // Navigating away from settings entirely - hide Ez Gmail settings panel if visible
+        // Not on settings at all - clean up
+        console.log('Ez Gmail: Not on settings - cleaning up');
+        
+        // Mark as inactive
+        this.ezGmailSettingsActive = false;
+        
+        if (this.protectionObserver) {
+          try {
+            this.protectionObserver.disconnect();
+            this.protectionObserver = null;
+          } catch (e) {
+            console.warn('Ez Gmail: Error disconnecting observer:', e);
+          }
+        }
+        
+        // Remove our panel
         const ezPanel = document.querySelector('.ez-gmail-settings-panel');
         if (ezPanel && ezPanel.parentNode) {
-          console.log('Ez Gmail: Navigating away from settings, removing Ez Gmail panel');
           ezPanel.parentNode.removeChild(ezPanel);
-          this.originalContent = null; // Clear stored content
+        }
+        
+        // CRITICAL: Restore content area AND parent container styles
+        const contentArea = document.querySelector('.Tm.aeJ') || 
+                           document.querySelector('[role="main"]') ||
+                           document.querySelector('.nH.w-asV.aiw');
+        if (contentArea) {
+          contentArea.style.removeProperty('min-height');
+          contentArea.style.removeProperty('padding');
+          
+          const parentContainer = contentArea.closest('.nH');
+          if (parentContainer) {
+            parentContainer.style.removeProperty('min-height');
+            parentContainer.style.removeProperty('padding-top');
+            parentContainer.style.removeProperty('padding-bottom');
+          }
+          console.log('Ez Gmail: ✓ Restored content area and parent container styles');
         }
       }
     });
