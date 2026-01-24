@@ -566,6 +566,11 @@ class SettingsIntegration {
       settingsPanel.style.position = 'relative';
       settingsPanel.style.zIndex = '1000';
       console.log('Ez Gmail: ✓ Ez Gmail panel now visible');
+      
+      // Re-enable protection
+      console.log('Ez Gmail: Re-enabling content protection...');
+      this.protectEzGmailContent(contentArea, settingsPanel);
+      
       return;
     }
     
@@ -929,7 +934,69 @@ class SettingsIntegration {
     console.log('Ez Gmail: Showing navigation bar on settings tab...');
     this.showNavigationOnSettingsTab();
     
+    // CRITICAL: Protect our panel from Gmail interference
+    console.log('Ez Gmail: Setting up content protection...');
+    this.protectEzGmailContent(contentArea, settingsPanel);
+    
     console.log('Ez Gmail: ========== EZ GMAIL SETTINGS COMPLETE ==========');
+  }
+
+  // Protect Ez Gmail content from Gmail interference
+  protectEzGmailContent(contentArea, settingsPanel) {
+    // Create observer to watch for Gmail trying to restore its content
+    const protectionObserver = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        // Check if Gmail is trying to show its content
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1 && !node.classList.contains('ez-gmail-settings-panel')) {
+            console.log('Ez Gmail: ⚠ Gmail trying to add content, hiding it...');
+            node.style.display = 'none';
+            node.style.visibility = 'hidden';
+            node.style.opacity = '0';
+            node.style.position = 'absolute';
+            node.style.zIndex = '-1';
+          }
+        });
+        
+        // Check if our panel was removed
+        if (!document.querySelector('.ez-gmail-settings-panel')) {
+          console.log('Ez Gmail: ⚠ Our panel was removed! Re-adding...');
+          if (contentArea && settingsPanel) {
+            contentArea.appendChild(settingsPanel);
+          }
+        }
+        
+        // Check if Gmail unhid its content
+        Array.from(contentArea.children).forEach(child => {
+          if (!child.classList.contains('ez-gmail-settings-panel')) {
+            if (child.style.display !== 'none') {
+              console.log('Ez Gmail: ⚠ Gmail unhid content, re-hiding...');
+              child.style.display = 'none';
+              child.style.visibility = 'hidden';
+              child.style.opacity = '0';
+              child.style.position = 'absolute';
+              child.style.zIndex = '-1';
+            }
+          }
+        });
+      });
+    });
+    
+    // Start observing
+    protectionObserver.observe(contentArea, {
+      childList: true,
+      subtree: false,
+      attributes: true,
+      attributeFilter: ['style']
+    });
+    
+    // Track this observer for cleanup
+    this.observers.push(protectionObserver);
+    if (window.EzGmailCleanup) {
+      window.EzGmailCleanup.registerObserver(protectionObserver, 'SettingsIntegration - Content Protection');
+    }
+    
+    console.log('Ez Gmail: ✓ Content protection active');
   }
 
   // Attach event listeners to settings controls
@@ -1375,10 +1442,20 @@ class SettingsIntegration {
           const isEzTabActive = ezTab && ezTab.classList.contains('aKh');
           
           if (isEzTabActive && hash === '#settings') {
-            // Gmail reset the hash but our tab is still active - keep showing our panel
-            console.log('Ez Gmail: Hash reset but Ez tab still active, keeping panel visible');
+            // Gmail reset the hash but our tab is still active - FIGHT BACK!
+            console.log('Ez Gmail: ⚠ Gmail tried to reset hash! Fighting back...');
             onEzGmailSettings = true;
-            // Don't call showEzGmailSettings again, panel should already be visible
+            
+            // Immediately restore our hash
+            isRestoringHash = true;
+            window.location.hash = '#settings/ezgmail';
+            console.log('Ez Gmail: ✓ Hash restored to #settings/ezgmail');
+            
+            // Re-show our panel to fight Gmail's interference
+            setTimeout(() => {
+              console.log('Ez Gmail: Re-showing panel after Gmail interference');
+              this.showEzGmailSettings();
+            }, 50);
           } else {
             // On other settings pages - restore original content and deactivate our tab
             console.log('Ez Gmail: Navigated to other settings page:', hash);
