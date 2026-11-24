@@ -4,6 +4,7 @@
 
 class SettingsIntegration {
   constructor() {
+    this.initialized = false; // Guard against duplicate init (double listeners/observers)
     this.settingsTabAdded = false;
     this.observer = null;
     this.observers = []; // Track all observers for cleanup
@@ -11,10 +12,16 @@ class SettingsIntegration {
     this.ezGmailSettingsActive = false; // Track if Ez Gmail settings are currently showing
     this.lastShowSettingsTime = 0; // Rate limiting for showEzGmailSettings
     this.enforcementInterval = null; // Interval to enforce hash and tab state
+    this.tabObserver = null; // Observer watching the settings tab bar
   }
 
   // Initialize settings integration
   init() {
+    if (this.initialized) {
+      console.log('Ez Gmail: Settings integration already initialized, skipping');
+      return;
+    }
+    this.initialized = true;
     console.log('Ez Gmail: Initializing settings integration...');
     
     // Add left sidebar button with retries (works on all pages)
@@ -29,6 +36,67 @@ class SettingsIntegration {
     this.monitorSettingsNavigation();
   }
 
+  // Find Gmail's settings tabs container. The real tab bar is the
+  // smallest ancestor containing >=5 real settings anchors
+  // (<a role="tab" href="...#settings/<name>">). Transient "Loading..."
+  // skeletons, hidden stale DOM ("Fetching mail..."), and unrelated
+  // [role=tab] elements can never satisfy that, so this returns null
+  // until Gmail's real strip is rendered.
+  findTabsContainer() {
+    const isRealTab = (el) =>
+      !this.isExtensionElement(el) &&
+      el.offsetParent !== null &&                 // hidden/stale DOM
+      !!(el.textContent || '').trim();            // placeholder
+
+    const walkUp = (el, sel, need) => {
+      let node = el.parentElement;
+      while (node && node !== document.body) {
+        if (node.querySelectorAll(sel).length >= need) return node;
+        node = node.parentElement;
+      }
+      return el.parentElement;
+    };
+
+    // Primary: current markup - real settings anchors with real hrefs
+    const anchors = Array.from(
+      document.querySelectorAll('a[role="tab"][href*="#settings/"]'))
+      .filter(isRealTab);
+    if (anchors.length >= 5) {
+      return walkUp(anchors[0], 'a[role="tab"][href*="#settings/"]', 5);
+    }
+
+    // Fallback: legacy .J-J5-Ji div tabs - also require >=5 so a tiny
+    // transient bar can never win.
+    const legacy = Array.from(document.querySelectorAll('.J-J5-Ji'))
+      .filter(isRealTab);
+    if (legacy.length >= 5) {
+      return walkUp(legacy[0], '.J-J5-Ji', 5);
+    }
+
+    return null; // Real strip not rendered yet - caller retries
+  }
+
+  // Get all settings tabs inside the container (Gmail tabs + ours).
+  // Gmail's current markup uses <a role="tab"> inside .r1 cells; older
+  // versions used .J-J5-Ji divs. Union both so we always get everything.
+  getSettingsTabs(container) {
+    if (!container) return [];
+    const tabs = container.querySelectorAll('.J-J5-Ji, [role="tab"]');
+    return Array.from(tabs);
+  }
+
+  // True for elements owned by this extension - these must never be
+  // hidden or "restored" by the Gmail-content hide/restore logic
+  // (e.g. the navigation bar, our settings panel).
+  isExtensionElement(el) {
+    if (!el || el.nodeType !== 1) return false;
+    return el.id === 'ez-gmail-navigation' ||
+           el.hasAttribute('data-extension-element') ||
+           el.classList.contains('ez-gmail-settings-panel') ||
+           el.classList.contains('ez-gmail-popup-menu') ||
+           el.classList.contains('ez-gmail-sidebar-btn');
+  }
+
   // Wait for settings page elements
   waitForSettingsPage() {
     const checkSettings = setInterval(() => {
@@ -38,14 +106,20 @@ class SettingsIntegration {
       }
 
       // Look for settings tabs container
-      const tabsContainer = document.querySelector('.fY') || // Settings tabs container
-                           document.querySelector('[role="navigation"]');
-      
-      if (tabsContainer && !this.settingsTabAdded) {
-        console.log('Ez Gmail: Settings page detected, adding custom tab');
-        this.addCustomSettingsTab(tabsContainer);
-        clearInterval(checkSettings);
+      const tabsContainer = this.findTabsContainer();
+      if (!tabsContainer) return;
+
+      // Decide by DOM, not by the settingsTabAdded flag - the flag goes
+      // stale (tab dropped on re-render, or user left settings and the
+      // flag was never reset).
+      if (tabsContainer.querySelector('.ez-gmail-horizontal-tab')) {
+        clearInterval(checkSettings); // already there - done
+        return;
       }
+
+      console.log('Ez Gmail: Settings page detected, adding custom tab');
+      this.addCustomSettingsTab(tabsContainer);
+      clearInterval(checkSettings);
     }, 500);
 
     // Stop checking after 30 seconds
@@ -157,6 +231,12 @@ class SettingsIntegration {
         </svg>
         Switch Signature
       </div>
+      <div class="ez-menu-item" data-action="pick-verse" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #202124; transition: background 0.2s;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/>
+        </svg>
+        Signature Verse
+      </div>
       <div class="ez-menu-divider" style="height: 1px; background: #e0e0e0; margin: 4px 0;"></div>
       <div class="ez-menu-item" data-action="settings" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #202124; transition: background 0.2s;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -184,10 +264,25 @@ class SettingsIntegration {
         if (action === 'insert-template') {
           // TODO: Open template selector
           console.log('Ez Gmail: Insert template clicked');
-          chrome.runtime.sendMessage({ action: 'openTemplates' });
+          try {
+            chrome.runtime.sendMessage({ action: 'openTemplates' });
+          } catch (e) {
+            console.warn('Ez Gmail: Could not open templates (context invalidated)', e);
+          }
         } else if (action === 'switch-signature') {
-          // TODO: Open signature switcher
           console.log('Ez Gmail: Switch signature clicked');
+          if (window.EzGmailSignatureManager) {
+            window.EzGmailSignatureManager.showSignatureSwitcher();
+          } else {
+            console.warn('Ez Gmail: Signature manager not available');
+          }
+        } else if (action === 'pick-verse') {
+          console.log('Ez Gmail: Pick verse clicked');
+          if (window.EzGmailVerseQuoteManager) {
+            window.EzGmailVerseQuoteManager.showVersePicker();
+          } else {
+            console.warn('Ez Gmail: Verse manager not available');
+          }
         } else if (action === 'settings') {
           window.location.hash = '#settings/ezgmail';
           // hashchange event will handle showing the panel
@@ -202,55 +297,49 @@ class SettingsIntegration {
     // Append menu to document body (not button) so it's not constrained
     document.body.appendChild(popupMenu);
     
-    let hoverTimeout;
+    // Position and show the popup menu above the button
+    const showMenu = () => {
+      const buttonRect = ezButton.getBoundingClientRect();
+      popupMenu.style.left = buttonRect.left + 'px';
+      popupMenu.style.bottom = (window.innerHeight - buttonRect.top + 8) + 'px';
+      popupMenu.style.width = buttonRect.width + 'px';
+      popupMenu.style.opacity = '1';
+      popupMenu.style.visibility = 'visible';
+    };
     
-    // Add hover effect with menu
+    const hideMenu = () => {
+      popupMenu.style.opacity = '0';
+      popupMenu.style.visibility = 'hidden';
+    };
+    
+    const isMenuVisible = () => popupMenu.style.visibility === 'visible';
+    
+    // Hover only highlights the button - the menu opens on CLICK only
     ezButton.addEventListener('mouseenter', () => {
       ezButton.style.backgroundColor = '#f8f9fa';
       ezButton.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-      
-      // Show menu after short delay
-      hoverTimeout = setTimeout(() => {
-        // Calculate position for fixed menu
-        const buttonRect = ezButton.getBoundingClientRect();
-        popupMenu.style.left = buttonRect.left + 'px';
-        popupMenu.style.bottom = (window.innerHeight - buttonRect.top + 8) + 'px';
-        popupMenu.style.width = buttonRect.width + 'px';
-        
-        popupMenu.style.opacity = '1';
-        popupMenu.style.visibility = 'visible';
-      }, 300);
     });
     
     ezButton.addEventListener('mouseleave', () => {
-      clearTimeout(hoverTimeout);
       ezButton.style.backgroundColor = 'white';
       ezButton.style.boxShadow = 'none';
-      
-      // Hide menu
-      setTimeout(() => {
-        if (!popupMenu.matches(':hover')) {
-          popupMenu.style.opacity = '0';
-          popupMenu.style.visibility = 'hidden';
-        }
-      }, 100);
     });
     
-    // Keep menu visible when hovering over it
-    popupMenu.addEventListener('mouseenter', () => {
-      popupMenu.style.opacity = '1';
-      popupMenu.style.visibility = 'visible';
+    // Click toggles the popup menu (does NOT navigate)
+    ezButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isMenuVisible()) {
+        hideMenu();
+      } else {
+        showMenu();
+      }
     });
     
-    popupMenu.addEventListener('mouseleave', () => {
-      popupMenu.style.opacity = '0';
-      popupMenu.style.visibility = 'hidden';
-    });
-    
-    // Add click handler (goes directly to settings)
-    ezButton.addEventListener('click', () => {
-      window.location.hash = '#settings/ezgmail';
-      // hashchange event will handle showing the panel
+    // Close the menu when clicking anywhere else
+    document.addEventListener('click', (e) => {
+      if (isMenuVisible() && !popupMenu.contains(e.target) && !ezButton.contains(e.target)) {
+        hideMenu();
+      }
     });
 
     // Set parent container to relative positioning
@@ -291,33 +380,70 @@ class SettingsIntegration {
   }
 
   // Add tab to horizontal settings tabs
-  addHorizontalTab() {
-    // Find the horizontal tabs container - it's inside div.fY
-    const tabsContainer = document.querySelector('.fY');
+  addHorizontalTab(retryCount = 0) {
+    // Find the horizontal tabs container - it's inside div.fY (or a fallback)
+    const tabsContainer = this.findTabsContainer();
     
     if (!tabsContainer) {
-      console.log('Ez Gmail: Could not find horizontal tabs container (.fY)');
-      // Retry after a delay
-      setTimeout(() => this.addHorizontalTab(), 500);
+      // Bound retries to avoid an infinite loop when not on the settings page
+      if (retryCount < 20 && window.location.hash.includes('settings')) {
+        setTimeout(() => this.addHorizontalTab(retryCount + 1), 500);
+      } else if (retryCount >= 20) {
+        console.log('Ez Gmail: Gave up looking for settings tabs container');
+      }
+      return;
+    }
+    // Guard against concurrent calls - the deferred insertion below can
+    // race and insert duplicate tabs.
+    if (this._addingTab) {
       return;
     }
 
-    // Check if already added
-    if (document.querySelector('.ez-gmail-horizontal-tab')) {
+    // Check if already added - but verify it's inside the real tab bar,
+    // not a stale placeholder container. Remove ALL copies found
+    // elsewhere (races can create duplicates).
+    const existingTabs = document.querySelectorAll('.ez-gmail-horizontal-tab');
+    let inRealBar = false;
+    existingTabs.forEach(tab => {
+      if (tabsContainer.contains(tab)) {
+        if (!inRealBar) {
+          inRealBar = true;
+        } else {
+          // Duplicate inside the real bar - remove it
+          (tab.closest('.ez-gmail-tab-wrapper') || tab).remove();
+        }
+      } else {
+        // Stranded in a stale container - remove it
+        (tab.closest('.ez-gmail-tab-wrapper') || tab).remove();
+      }
+    });
+    if (inRealBar) {
       console.log('Ez Gmail: Horizontal tab already exists');
       return;
     }
-    
+    if (existingTabs.length) {
+      console.log('Ez Gmail: Removed tab from stale container, re-adding to real tab bar');
+    }
+
+    this._addingTab = true;
+
     console.log('Ez Gmail: Found tabs container, adding Ez Gmail tab...');
 
-    // Create wrapper matching Gmail's .fZ structure
+    // Create wrapper matching Gmail's .fZ structure.
+    // display:contents makes the wrapper layout-neutral - the stale fZ
+    // class was rendering as a block box that pushed content down and
+    // hid the tab from the tab strip.
     const ezWrapper = document.createElement('div');
     ezWrapper.className = 'fZ ez-gmail-tab-wrapper';
     ezWrapper.setAttribute('data-ez-gmail', 'true');
+    ezWrapper.style.display = 'contents';
     
-    // Create tab matching Gmail's exact style
+    // Create tab matching Gmail's style. NO Gmail classes (.J-J5-Ji,
+    // .f0 etc.) - in the new markup they carry layout styles that can
+    // stretch our div over the whole strip and swallow other tabs'
+    // clicks. role=tab is enough for our own detection.
     const ezTab = document.createElement('div');
-    ezTab.className = 'J-J5-Ji ez-gmail-horizontal-tab';
+    ezTab.className = 'ez-gmail-horizontal-tab';
     ezTab.setAttribute('role', 'tab');
     ezTab.setAttribute('tabindex', '-1');
     ezTab.setAttribute('aria-selected', 'false');
@@ -334,6 +460,7 @@ class SettingsIntegration {
       transition: all 0.2s;
       margin: 0;
       line-height: normal;
+      height: auto !important;
     `;
     
     ezTab.textContent = 'Ez Gmail';
@@ -343,13 +470,13 @@ class SettingsIntegration {
     
     // Add hover styles
     ezTab.addEventListener('mouseenter', () => {
-      if (!ezTab.classList.contains('aKh')) {
+      if (ezTab.getAttribute('aria-selected') !== 'true') {
         ezTab.style.color = '#202124';
       }
     });
     
     ezTab.addEventListener('mouseleave', () => {
-      if (!ezTab.classList.contains('aKh')) {
+      if (ezTab.getAttribute('aria-selected') !== 'true') {
         ezTab.style.color = '#5f6368';
       }
     });
@@ -360,19 +487,27 @@ class SettingsIntegration {
       e.stopPropagation();
       
       // Remove active state from all tabs
-      tabsContainer.querySelectorAll('.J-J5-Ji').forEach(tab => {
+      this.getSettingsTabs(tabsContainer).forEach(tab => {
         tab.classList.remove('aKh');
         tab.setAttribute('aria-selected', 'false');
         tab.setAttribute('tabindex', '-1');
       });
       
-      // Add active state to our tab
-      ezTab.classList.add('aKh');
+      // Add active state to our tab (no aKh - that Gmail class carries
+      // height:56px and blows up the tab row)
       ezTab.setAttribute('aria-selected', 'true');
       ezTab.setAttribute('tabindex', '0');
       
-      window.location.hash = '#settings/ezgmail';
-      // hashchange event will handle showing the panel
+      if (window.location.hash === '#settings/ezgmail') {
+        // Same-hash navigation - hashchange won't fire, show directly.
+        // (Happens when Gmail kept our hash while showing General's
+        // content, leaving clicks here as no-ops.)
+        this._lastEzGmailNav = Date.now();
+        this.showEzGmailSettings();
+      } else {
+        window.location.hash = '#settings/ezgmail';
+        // hashchange event will handle showing the panel
+      }
     });
 
     // Insert BEFORE existing div.dJ element
@@ -399,10 +534,10 @@ class SettingsIntegration {
         tabsContainer.appendChild(ezWrapper);
       }
       
-      // Verify insertion
+      // Verify insertion (wrapper is the direct child of the container)
       const verifyTab = document.querySelector('.ez-gmail-horizontal-tab');
       if (verifyTab) {
-        const position = Array.from(tabsContainer.children).indexOf(verifyTab);
+        const position = Array.from(tabsContainer.children).indexOf(ezWrapper);
         console.log('Ez Gmail: Tab verification SUCCESS - Position:', position);
       } else {
         console.log('Ez Gmail: Tab verification FAILED');
@@ -413,7 +548,6 @@ class SettingsIntegration {
       console.log('Ez Gmail: Current hash:', currentHash);
       if (currentHash.includes('settings/ezgmail')) {
         console.log('Ez Gmail: Activating tab - on Ez Gmail settings page');
-        ezTab.classList.add('aKh');
         ezTab.setAttribute('aria-selected', 'true');
         ezTab.setAttribute('tabindex', '0');
         setTimeout(() => this.showEzGmailSettings(), 200);
@@ -422,7 +556,8 @@ class SettingsIntegration {
       }
       
       // NOW attach event listeners to other tabs (after insertion)
-      const allTabs = tabsContainer.querySelectorAll('.J-J5-Ji:not(.ez-gmail-horizontal-tab)');
+      const allTabs = this.getSettingsTabs(tabsContainer)
+        .filter(tab => !tab.classList.contains('ez-gmail-horizontal-tab'));
       console.log('Ez Gmail: Attaching click handlers to', allTabs.length, 'other tabs');
       
       allTabs.forEach(tab => {
@@ -437,11 +572,69 @@ class SettingsIntegration {
             
             // Restore original Gmail settings content
             this.restoreOriginalContent();
+
+            // Resolve the clicked tab's canonical route. The element
+            // receiving this listener may be a div wrapper - check the
+            // anchor itself, a child, or an ancestor.
+            const resolveTarget = () => {
+              const anchor = tab.tagName === 'A' ? tab :
+                            (tab.querySelector('a[href]') ||
+                             tab.closest('a[href]'));
+              let target = null;
+              if (anchor) {
+                // Gmail hrefs are often ABSOLUTE
+                // (mail.google.com/mail/u/0/#settings/general) - pull
+                // the hash portion out rather than requiring '#'.
+                const m = (anchor.getAttribute('href') || '')
+                            .match(/#settings\/[\w-]+/);
+                if (m) target = m[0];
+              }
+              if (!target) {
+                // General's anchor points at bare #settings, but its
+                // canonical route is /general.
+                const label = (tab.textContent || '').trim().toLowerCase();
+                if (label === 'general') target = '#settings/general';
+              }
+              return target;
+            };
+            const target = resolveTarget();
+            console.log('Ez Gmail: Other-tab route resolved to:', target);
+
+            // Drop back to the neutral #settings baseline NOW, before
+            // Gmail's handler runs - same starting point as a plain
+            // 'See all settings' load. Writing the TARGET here proved
+            // fragile: Gmail's click logic keys off the current hash,
+            // and seeing the destination already in the URL confused it.
+            const hNow = window.location.hash;
+            if (hNow.includes('ezgmail')) {
+              console.log('Ez Gmail: Pre-writing baseline hash', hNow, '-> #settings');
+              window.history.replaceState(null, '', '#settings');
+            }
+
+            // Safety net: if Gmail writes its own hash late and lands on
+            // a stale value, sync again after it settles.
+            const syncUrl = () => {
+              try {
+                if (!target) return;
+                const h = window.location.hash;
+                const stale = h === '#settings' || h === '#settings/' ||
+                              h.includes('ezgmail');
+                if (stale && h !== target) {
+                  console.log('Ez Gmail: Syncing stale hash', h, '->', target);
+                  window.history.replaceState(null, '', target);
+                }
+              } catch (e) { /* non-fatal */ }
+            };
+            setTimeout(syncUrl, 150);
+            setTimeout(syncUrl, 500);
+            setTimeout(syncUrl, 1200);
           } catch (error) {
             console.error('Ez Gmail: Error in tab click handler:', error);
           }
         }, { capture: true });
       });
+
+      this._addingTab = false;
     }, 100);
   }
 
@@ -462,14 +655,44 @@ class SettingsIntegration {
       display: inline-flex;
       gap: 8px;
       align-items: center;
-      gap: 4px;
-    ">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-      </svg>
-      Templates
-    </button>
+      margin-left: 16px;
     `;
+
+    quickLinks.innerHTML = `
+      <button class="ez-gmail-quick-link" data-action="templates" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #dadce0; border-radius: 16px; background: #fff; color: #1a73e8; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+        </svg>
+        Templates
+      </button>
+    `;
+
+    // Wire up the templates button to open the templates page
+    const templatesBtn = quickLinks.querySelector('[data-action="templates"]');
+    if (templatesBtn) {
+      templatesBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          chrome.runtime.sendMessage({ action: 'openTemplates' }, () => {
+            if (chrome.runtime.lastError) {
+              // Fallback: open the page directly
+              try {
+                window.open(chrome.runtime.getURL('pages/templates.html'), '_blank');
+              } catch (e2) { /* context invalidated */ }
+            }
+          });
+        } catch (e) {
+          console.warn('Ez Gmail: Could not open templates (context invalidated)', e);
+        }
+      });
+      templatesBtn.addEventListener('mouseenter', () => {
+        templatesBtn.style.background = '#e8f0fe';
+      });
+      templatesBtn.addEventListener('mouseleave', () => {
+        templatesBtn.style.background = '#fff';
+      });
+    }
 
     // Insert after settings header
     if (settingsHeader.parentNode) {
@@ -497,14 +720,23 @@ class SettingsIntegration {
     
     // CRITICAL: Deactivate all other tabs and activate only Ez Gmail tab
     console.log('Ez Gmail: Searching for tabs...');
-    const tabsContainer = document.querySelector('.fY');
+    const tabsContainer = this.findTabsContainer();
     if (!tabsContainer) {
-      console.warn('Ez Gmail: ⚠ Tabs container (.fY) not found!');
+      // Gmail may not have rendered the settings tabs yet - retry a few
+      // times, then give up until the next navigation event.
+      this._missingTabsRetries = (this._missingTabsRetries || 0) + 1;
+      if (this._missingTabsRetries <= 20) {
+        console.warn('Ez Gmail: ⚠ Tabs container not found, retrying shortly...');
+        setTimeout(() => this.showEzGmailSettings(), 300);
+      } else {
+        console.warn('Ez Gmail: ⚠ Tabs container still not found, giving up for now');
+      }
+      return;
     } else {
       console.log('Ez Gmail: ✓ Tabs container found');
     }
     
-    const allTabs = document.querySelectorAll('.fY .J-J5-Ji');
+    const allTabs = this.getSettingsTabs(tabsContainer);
     console.log(`Ez Gmail: Found ${allTabs.length} total tabs`);
     let ezGmailTabFound = false;
     
@@ -530,19 +762,22 @@ class SettingsIntegration {
     });
     
     if (!ezGmailTabFound) {
-      console.warn('Ez Gmail: ⚠ Ez Gmail tab not found in tab list!');
+      console.log('Ez Gmail: ⚠ Ez Gmail tab not found in tab list!');
       console.log('Ez Gmail: Attempting to find tab by other selectors...');
       const ezTab = document.querySelector('.ez-gmail-horizontal-tab');
       if (ezTab) {
         const tabText = ezTab.textContent ? ezTab.textContent.trim() : '(no text)';
         console.log(`Ez Gmail: ✓ Found Ez Gmail tab by direct selector: "${tabText}"`);
-        ezTab.classList.add('aKh');
         ezTab.setAttribute('aria-selected', 'true');
         ezTab.setAttribute('tabindex', '0');
         ezTab.style.setProperty('color', '#1a73e8', 'important');
+        ezTab.style.setProperty('box-shadow', 'inset 0 -2px 0 0 #1a73e8', 'important');
         ezGmailTabFound = true;
       } else {
-        console.error('Ez Gmail: ✗ Ez Gmail tab not found anywhere!');
+        // Gmail re-rendered the tab bar and dropped our tab - re-add it
+        console.warn('Ez Gmail: ✗ Ez Gmail tab missing - re-adding it');
+        this.settingsTabAdded = false;
+        this.addHorizontalTab();
       }
     }
     
@@ -577,10 +812,10 @@ class SettingsIntegration {
     if (settingsPanel) {
       console.log('Ez Gmail: ✓ Settings panel already exists, showing it');
       
-      // Hide Gmail content aggressively
+      // Hide Gmail content aggressively - but never our own elements
       let hiddenCount = 0;
       Array.from(contentArea.children).forEach(child => {
-        if (!child.classList.contains('ez-gmail-settings-panel')) {
+        if (!this.isExtensionElement(child)) {
           child.style.display = 'none';
           child.style.visibility = 'hidden';
           child.style.opacity = '0';
@@ -604,6 +839,11 @@ class SettingsIntegration {
       console.log('Ez Gmail: Re-enabling content protection...');
       this.protectEzGmailContent(contentArea, settingsPanel);
       
+      // Resume enforcement - it was cleared when Gmail stripped /ezgmail
+      // from the URL and restoreOriginalContent() ran. Without this, the
+      // nav bar and tab state stop being enforced.
+      this.startEnforcement();
+      
       return;
     }
     
@@ -625,7 +865,7 @@ class SettingsIntegration {
     
     let hiddenCount = 0;
     Array.from(contentArea.children).forEach(child => {
-      if (!child.classList.contains('ez-gmail-settings-panel')) {
+      if (!this.isExtensionElement(child)) {
         // Use display:none and height:0 to completely collapse the element
         child.style.setProperty('display', 'none', 'important');
         child.style.setProperty('height', '0', 'important');
@@ -753,6 +993,38 @@ class SettingsIntegration {
         </div>
       </div>
 
+      <!-- Signature Settings -->
+      <div style="background: white; border: 1px solid #dadce0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+        <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 500; color: #202124; display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#5f6368">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          </svg>
+          Signatures
+        </h2>
+        <p style="color: #5f6368; margin-bottom: 20px; font-size: 14px;">Edit your profile fields and signature templates. Fields are used for {{variable}} placeholders.</p>
+
+        <!-- Profile fields -->
+        <div id="ezProfileFields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-bottom: 12px;">
+          <label style="font-size:12px;color:#5f6368">Name<input id="ezProf-fullName" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Title<input id="ezProf-title" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Subtitle<input id="ezProf-subtitle" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Company<input id="ezProf-company" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Phone<input id="ezProf-phone" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Email<input id="ezProf-email" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Website<input id="ezProf-website" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">Address<input id="ezProf-address" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">City<input id="ezProf-city" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px"></label>
+          <label style="font-size:12px;color:#5f6368">State / ZIP<input id="ezProf-statezip" class="ez-prof-input" style="display:block;width:100%;height:36px;margin-top:4px;padding:0 10px;border:1px solid #dadce0;border-radius:4px;font-size:14px" placeholder="TX 75766"></label>
+        </div>
+        <button id="ezSaveProfile" style="background:#1a73e8;color:white;border:none;padding:8px 20px;border-radius:6px;font-weight:500;cursor:pointer;margin-bottom:20px">Save Profile</button>
+        <div id="ezProfileStatus" style="font-size:13px;color:#34a853;margin:-12px 0 16px;min-height:16px"></div>
+
+        <!-- Signature list -->
+        <h3 style="margin:0 0 10px;font-size:15px;font-weight:500;color:#202124">Your Signatures</h3>
+        <div id="ezSignatureList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+        <button id="ezNewSignature" style="background:white;color:#1a73e8;border:1px solid #dadce0;padding:8px 16px;border-radius:6px;font-weight:500;cursor:pointer">+ New Signature</button>
+      </div>
+
       <!-- Verse & Quote Settings -->
       <div style="background: white; border: 1px solid #dadce0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
         <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 500; color: #202124; display: flex; align-items: center; gap: 8px;">
@@ -848,6 +1120,16 @@ class SettingsIntegration {
                 <option value="MSG">MSG - The Message</option>
               </select>
             </label>
+            <button id="ezVersePicker" style="
+              background: white;
+              color: #1a73e8;
+              border: 1px solid #dadce0;
+              padding: 8px 16px;
+              border-radius: 6px;
+              font-weight: 500;
+              cursor: pointer;
+              font-size: 13px;
+            ">📖 Choose Verse, Rotation & Favorites…</button>
           </div>
           
           <label class="ez-setting-label" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 12px; border-radius: 4px; transition: background 0.2s;">
@@ -964,7 +1246,7 @@ class SettingsIntegration {
             Visit Ez IT Solutions
           </a>
           <span style="color: #dadce0;">•</span>
-          <span style="color: #5f6368; font-size: 14px;">Version 2.1 - Optimized</span>
+          <span style="color: #5f6368; font-size: 14px;">Version 2.2 - Stable</span>
           <span style="color: #dadce0;">•</span>
           <a href="#" id="ezHelpLink" style="color: #1a73e8; text-decoration: none; font-weight: 500; font-size: 14px;">
             Help & Documentation
@@ -1006,28 +1288,37 @@ class SettingsIntegration {
     this.enforceHashAndTab();
     
     // Set up MutationObserver to watch tabs for changes
-    const tabsContainer = document.querySelector('.fY');
+    const tabsContainer = this.findTabsContainer();
     if (tabsContainer) {
-      const tabObserver = new MutationObserver(() => {
-        if (this.ezGmailSettingsActive) {
+      // Disconnect any previous tab observer - repeated startEnforcement()
+      // calls used to stack observers, which fed back on each other and
+      // froze the page.
+      if (this.tabObserver) {
+        try { this.tabObserver.disconnect(); } catch (e) { /* ignore */ }
+        this.tabObserver = null;
+      }
+      
+      this.tabObserver = new MutationObserver(() => {
+        // Skip while we're the ones writing attributes (feedback loop)
+        if (this.ezGmailSettingsActive && !this._enforcingTab) {
           this.enforceTabState();
         }
       });
       
-      tabObserver.observe(tabsContainer, {
+      this.tabObserver.observe(tabsContainer, {
         attributes: true,
         attributeFilter: ['class', 'aria-selected'],
         subtree: true
       });
       
-      this.observers.push(tabObserver);
       if (window.EzGmailCleanup) {
-        window.EzGmailCleanup.registerObserver(tabObserver, 'SettingsIntegration - Tab State Observer');
+        window.EzGmailCleanup.registerObserver(this.tabObserver, 'SettingsIntegration - Tab State Observer');
       }
       console.log('Ez Gmail: ✓ Started tab mutation observer');
     }
     
-    // AGGRESSIVE: Enforce hash every 300ms to fight Gmail
+    // Enforce hash and tab state periodically to fight Gmail's resets.
+    // 250ms is responsive enough without hammering the DOM.
     this.enforcementInterval = setInterval(() => {
       if (!this.ezGmailSettingsActive) {
         clearInterval(this.enforcementInterval);
@@ -1035,17 +1326,19 @@ class SettingsIntegration {
         return;
       }
       
-      // Force hash to stay at /ezgmail
-      if (window.location.hash === '#settings' || window.location.hash === '#settings/') {
-        if (window.history && window.history.replaceState) {
-          window.history.replaceState(null, '', '#settings/ezgmail');
-        }
+      // Keep /ezgmail visible in the URL - Gmail strips it to bare
+      // #settings. replaceState is silent (no hashchange), and this
+      // whole interval dies the instant ezGmailSettingsActive is
+      // cleared by another tab's click handler.
+      if (window.location.hash === '#settings' ||
+          window.location.hash === '#settings/') {
+        window.history.replaceState(null, '', '#settings/ezgmail');
       }
-      
+
       this.enforceHashAndTab();
-    }, 300);
+    }, 250);
     
-    console.log('Ez Gmail: ✓ Started aggressive enforcement interval (300ms)');
+    console.log('Ez Gmail: ✓ Started enforcement interval (250ms)');
   }
 
   // Enforce hash and tab state together
@@ -1056,11 +1349,41 @@ class SettingsIntegration {
     // Only enforce tab state
     this.enforceTabState();
     
-    // Ensure OUR navigation bar stays hidden on settings
-    const navBar = document.getElementById('ez-gmail-navigation');
-    if (navBar && navBar.style.display !== 'none') {
-      navBar.style.setProperty('display', 'none', 'important');
+    // Remove the email navigation bar entirely on our settings page.
+    // DOM removal can't be overridden by Gmail's re-renders, style
+    // resets, or our own restore sweeps. GmailNavigation.init()
+    // re-creates it once we navigate to a non-settings page.
+    document.querySelectorAll('#ez-gmail-navigation').forEach(nav => nav.remove());
+
+    // Collapse the vertical gap around Gmail's settings header
+    this.collapseSettingsChrome();
+  }
+
+  // Collapse the vertical gap between Gmail's "Settings" header/tab bar
+  // and our settings panel. The .du (Settings heading), .Y7 spacer, .qZ
+  // wrapper, .fY tab bar margins and the .dJ placeholder all leave a
+  // large empty hole above the content area.
+  collapseSettingsChrome() {
+    const collapse = (el, props) => {
+      if (!el || this.isExtensionElement(el)) return;
+      props.forEach(prop => el.style.setProperty(prop, '0', 'important'));
+    };
+
+    const header = document.querySelector('.aeH');
+    if (header) {
+      collapse(header.querySelector('.du'), ['margin-bottom', 'padding-bottom', 'min-height']);
+      collapse(header.querySelector('.Y7'), ['height', 'min-height', 'margin', 'padding']);
+      collapse(header.querySelector('h2.dt, .dt'), ['margin-bottom', 'padding-bottom']);
+      collapse(header.querySelector('.qZ'), ['margin-bottom', 'padding-bottom']);
     }
+
+    const tabsContainer = this.findTabsContainer();
+    if (tabsContainer) {
+      collapse(tabsContainer, ['margin-bottom', 'padding-bottom']);
+      collapse(tabsContainer.querySelector('.dJ'), ['height', 'min-height', 'margin', 'padding']);
+    }
+
+    collapse(document.querySelector('.Tm.aeJ'), ['margin-top', 'padding-top', 'min-height']);
   }
 
   // Protect Ez Gmail content from Gmail interference
@@ -1085,10 +1408,18 @@ class SettingsIntegration {
     // Create NEW observer to watch for Gmail trying to restore its content
     try {
       this.protectionObserver = new MutationObserver((mutations) => {
+        // CRITICAL: Check if we're still active FIRST
+        if (!this.ezGmailSettingsActive) {
+          console.log('Ez Gmail: Protection observer fired but settings inactive - ignoring');
+          return;
+        }
+        
         mutations.forEach(mutation => {
           // Check if Gmail is trying to show its content
           mutation.addedNodes.forEach(node => {
-            if (node.nodeType === 1 && !node.classList.contains('ez-gmail-settings-panel')) {
+            if (node.nodeType === 1 &&
+                !this.isExtensionElement(node) &&
+                !node.closest('.ez-gmail-settings-panel, #ez-gmail-navigation, [data-extension-element]')) {
               console.log('Ez Gmail: Gmail trying to add content, hiding it...');
               node.style.setProperty('display', 'none', 'important');
               node.style.setProperty('height', '0', 'important');
@@ -1097,6 +1428,8 @@ class SettingsIntegration {
               node.style.setProperty('opacity', '0', 'important');
               node.style.setProperty('position', 'absolute', 'important');
               node.style.setProperty('z-index', '-9999', 'important');
+              // Mark so restore can find and unhide this element later
+              node.setAttribute('data-ez-hidden', 'true');
             }
           });
           
@@ -1110,7 +1443,7 @@ class SettingsIntegration {
           
           // Check if Gmail unhid its content
           Array.from(contentArea.children).forEach(child => {
-            if (!child.classList.contains('ez-gmail-settings-panel')) {
+            if (!this.isExtensionElement(child)) {
               if (child.style.display !== 'none') {
                 console.log('Ez Gmail: ⚠ Gmail unhid content, re-hiding...');
                 child.style.display = 'none';
@@ -1118,6 +1451,7 @@ class SettingsIntegration {
                 child.style.opacity = '0';
                 child.style.position = 'absolute';
                 child.style.zIndex = '-1';
+                child.setAttribute('data-ez-hidden', 'true');
               }
             }
           });
@@ -1147,6 +1481,13 @@ class SettingsIntegration {
   // Attach event listeners to settings controls
   attachSettingsListeners() {
     console.log('Ez Gmail: attachSettingsListeners() called');
+    
+    // If the extension was reloaded without refreshing Gmail, chrome.*
+    // APIs throw "Extension context invalidated" - bail out cleanly.
+    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+      console.warn('Ez Gmail: Extension context invalidated - reload the Gmail tab');
+      return;
+    }
     // Add hover effects to all labels
     const labels = document.querySelectorAll('.ez-setting-label');
     labels.forEach(label => {
@@ -1162,7 +1503,11 @@ class SettingsIntegration {
     const openTemplatesBtn = document.getElementById('ezOpenTemplatesBtn');
     if (openTemplatesBtn) {
       openTemplatesBtn.addEventListener('click', () => {
-        chrome.runtime.sendMessage({action: 'openTemplates'});
+        try {
+          chrome.runtime.sendMessage({action: 'openTemplates'});
+        } catch (e) {
+          console.warn('Ez Gmail: Could not open templates (context invalidated)', e);
+        }
       });
       openTemplatesBtn.addEventListener('mouseenter', () => {
         openTemplatesBtn.style.transform = 'translateY(-2px)';
@@ -1353,6 +1698,68 @@ class SettingsIntegration {
       });
     });
 
+    // Verse picker (rotation / favorites / fixed) - reuses the modal
+    const versePickerBtn = document.getElementById('ezVersePicker');
+    if (versePickerBtn) {
+      versePickerBtn.addEventListener('click', () => {
+        if (window.EzGmailVerseQuoteManager) {
+          window.EzGmailVerseQuoteManager.showVersePicker();
+        }
+      });
+    }
+
+    // ---- Signatures section ----
+    const sigMgr = window.EzGmailSignatureManager;
+    if (sigMgr) {
+      sigMgr.init().then(() => {
+        this.populateSignatureProfile(sigMgr);
+        this.renderSignatureList(sigMgr);
+      });
+    }
+
+    // Save profile button
+    const saveProfileBtn = document.getElementById('ezSaveProfile');
+    if (saveProfileBtn && sigMgr) {
+      saveProfileBtn.addEventListener('click', async () => {
+        const v = id => (document.getElementById(id)?.value || '').trim();
+        const sz = v('ezProf-statezip');
+        const m = sz.match(/^([A-Za-z]{2})\s+(\d{5})$/);
+        await sigMgr.updateUserProfile({
+          fullName: v('ezProf-fullName'),
+          title: v('ezProf-title'),
+          subtitle: v('ezProf-subtitle'),
+          company: v('ezProf-company'),
+          phone: v('ezProf-phone'),
+          email: v('ezProf-email'),
+          website: v('ezProf-website'),
+          address: v('ezProf-address'),
+          city: v('ezProf-city'),
+          state: m ? m[1] : '',
+          zip: m ? m[2] : ''
+        });
+        const status = document.getElementById('ezProfileStatus');
+        if (status) {
+          status.textContent = '✓ Profile saved';
+          setTimeout(() => { status.textContent = ''; }, 2500);
+        }
+      });
+    }
+
+    // New signature button
+    const newSigBtn = document.getElementById('ezNewSignature');
+    if (newSigBtn && sigMgr) {
+      newSigBtn.addEventListener('click', async () => {
+        await sigMgr.addSignature({
+          name: 'New Signature',
+          html: '<div style="font-family:Arial,sans-serif;font-size:14px">{{fullName}}</div>',
+          description: 'Custom signature',
+          category: 'custom',
+          isDefault: false
+        });
+        this.renderSignatureList(sigMgr);
+      });
+    }
+
     // Load saved settings
     chrome.storage.local.get([
       'ezNavEnabled', 'ezNavDatePicker', 'ezNavPageNumbers', 
@@ -1386,6 +1793,103 @@ class SettingsIntegration {
     });
   }
   
+  // Fill the profile inputs from the signature manager
+  populateSignatureProfile(sigMgr) {
+    const p = sigMgr.userProfile || {};
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val || '';
+    };
+    set('ezProf-fullName', p.fullName);
+    set('ezProf-title', p.title);
+    set('ezProf-subtitle', p.subtitle);
+    set('ezProf-company', p.company);
+    set('ezProf-phone', p.phone);
+    set('ezProf-email', p.email);
+    set('ezProf-website', p.website);
+    set('ezProf-address', p.address);
+    set('ezProf-city', p.city);
+    set('ezProf-statezip', [p.state, p.zip].filter(Boolean).join(' '));
+  }
+
+  // Render the signature rows: active radio, Edit, Delete
+  renderSignatureList(sigMgr) {
+    const list = document.getElementById('ezSignatureList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const esc = s => String(s || '').replace(/[&<>"']/g,
+      c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    sigMgr.getAllSignatures().forEach(sig => {
+      const row = document.createElement('div');
+      row.style.cssText = 'border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px';
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="radio" name="ez-active-sig" data-id="${esc(sig.id)}"
+            ${sig.id === sigMgr.activeSignatureId ? 'checked' : ''} title="Set as active">
+          <div style="flex:1;min-width:0">
+            <input class="ez-sig-name" data-id="${esc(sig.id)}" value="${esc(sig.name)}"
+              style="width:100%;font-weight:500;font-size:14px;border:none;background:transparent;color:#202124;padding:0">
+            ${sig.description ? `<div style="font-size:12px;color:#5f6368">${esc(sig.description)}</div>` : ''}
+          </div>
+          <button class="ez-sig-edit" data-id="${esc(sig.id)}"
+            style="background:none;border:1px solid #dadce0;border-radius:6px;padding:4px 12px;font-size:12px;color:#1a73e8;cursor:pointer">Edit</button>
+          ${sigMgr.getAllSignatures().length > 1 ?
+            `<button class="ez-sig-del" data-id="${esc(sig.id)}" title="Delete"
+              style="background:none;border:none;font-size:16px;color:#d93025;cursor:pointer">✕</button>` : ''}
+        </div>
+        <div class="ez-sig-editor" data-id="${esc(sig.id)}" style="display:none;margin-top:10px">
+          <textarea class="ez-sig-html" rows="6"
+            style="width:100%;font-family:monospace;font-size:12px;border:1px solid #dadce0;border-radius:4px;padding:8px;box-sizing:border-box">${esc(sig.html)}</textarea>
+          <button class="ez-sig-save" data-id="${esc(sig.id)}"
+            style="margin-top:6px;background:#1a73e8;color:white;border:none;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer">Save HTML</button>
+          <span class="ez-sig-saved" style="font-size:12px;color:#34a853;margin-left:8px"></span>
+        </div>`;
+      list.appendChild(row);
+    });
+
+    // Wire row events
+    list.querySelectorAll('input[name="ez-active-sig"]').forEach(r => {
+      r.addEventListener('change', async () => {
+        await sigMgr.setActiveSignature(r.dataset.id);
+      });
+    });
+    list.querySelectorAll('.ez-sig-name').forEach(inp => {
+      inp.addEventListener('change', async () => {
+        await sigMgr.updateSignature(inp.dataset.id, { name: inp.value.trim() });
+      });
+    });
+    list.querySelectorAll('.ez-sig-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ed = list.querySelector(`.ez-sig-editor[data-id="${btn.dataset.id}"]`);
+        if (ed) {
+          ed.style.display = ed.style.display === 'none' ? 'block' : 'none';
+          btn.textContent = ed.style.display === 'none' ? 'Edit' : 'Close';
+        }
+      });
+    });
+    list.querySelectorAll('.ez-sig-save').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const ed = btn.closest('.ez-sig-editor');
+        const ta = ed.querySelector('.ez-sig-html');
+        await sigMgr.updateSignature(btn.dataset.id, { html: ta.value });
+        const saved = ed.querySelector('.ez-sig-saved');
+        saved.textContent = '✓ Saved';
+        setTimeout(() => { saved.textContent = ''; }, 2000);
+      });
+    });
+    list.querySelectorAll('.ez-sig-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sig = sigMgr.getSignature(btn.dataset.id);
+        if (confirm(`Delete signature "${sig ? sig.name : ''}"?`)) {
+          await sigMgr.deleteSignature(btn.dataset.id);
+          this.renderSignatureList(sigMgr);
+        }
+      });
+    });
+  }
+
   // Show add verse modal
   showAddVerseModal() {
     const modal = document.createElement('div');
@@ -1515,7 +2019,38 @@ class SettingsIntegration {
     
     // Mark Ez Gmail settings as inactive FIRST
     this.ezGmailSettingsActive = false;
+    // Clear the ezgmail-nav stamp - a bare #settings landing that follows
+    // a REAL user click to another tab must be treated as 'other settings
+    // page', not as Gmail stripping our suffix.
+    this._lastEzGmailNav = 0;
     console.log('Ez Gmail: ✓ Ez Gmail settings marked as INACTIVE');
+    
+    // Clear our tab's active styling (blue underline, blue text) so the
+    // Gmail tab the user clicked owns the selected state.
+    document.querySelectorAll('.ez-gmail-horizontal-tab').forEach(t => {
+      t.setAttribute('aria-selected', 'false');
+      t.setAttribute('tabindex', '-1');
+      t.style.removeProperty('box-shadow');
+      t.style.removeProperty('color');
+      t.style.setProperty('cursor', 'pointer'); // restore strips cursor - keep it
+      t.classList.remove('aKh');
+    });
+    
+    // Remove the inline underline suppression we applied to Gmail's own
+    // tabs and their cells - otherwise the newly selected tab can't show
+    // its active state.
+    document.querySelectorAll('[role="tab"], .J-J5-Ji').forEach(t => {
+      if (t.classList.contains('ez-gmail-horizontal-tab')) return; // keep our cursor/styles
+      t.style.removeProperty('box-shadow');
+      t.style.removeProperty('border-bottom-color');
+      t.style.removeProperty('color');
+      t.style.removeProperty('cursor');
+      const cell = t.parentElement;
+      if (cell) {
+        cell.style.removeProperty('box-shadow');
+        cell.style.removeProperty('border-bottom-color');
+      }
+    });
     
     // Stop enforcement interval
     if (this.enforcementInterval) {
@@ -1533,6 +2068,12 @@ class SettingsIntegration {
       } catch (e) {
         console.warn('Ez Gmail: Error disconnecting protection observer:', e);
       }
+    }
+    
+    // Disconnect tab state observer
+    if (this.tabObserver) {
+      try { this.tabObserver.disconnect(); } catch (e) { /* ignore */ }
+      this.tabObserver = null;
     }
     
     // Only restore if we're on a settings page
@@ -1590,21 +2131,31 @@ class SettingsIntegration {
       }
     }
     
-    // Unhide ALL Gmail content that we previously hid
+    // Unhide ALL Gmail content that we previously hid - at ANY depth,
+    // since the protection observer can hide deeply-added nodes too.
     console.log('Ez Gmail: Restoring all hidden Gmail content...');
+    const restoreHiddenElement = (el) => {
+      // Never touch our own elements (panel, nav bar, etc.)
+      if (this.isExtensionElement(el) || el.closest('.ez-gmail-settings-panel')) return;
+      el.style.removeProperty('display');
+      el.style.removeProperty('height');
+      el.style.removeProperty('min-height');
+      el.style.removeProperty('max-height');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('position');
+      el.style.removeProperty('z-index');
+      el.style.removeProperty('overflow');
+      el.removeAttribute('data-ez-hidden');
+    };
+    
+    // Elements explicitly marked as hidden by us
+    contentArea.querySelectorAll('[data-ez-hidden]').forEach(restoreHiddenElement);
+    
+    // Also sweep direct children in case some lack the marker
     Array.from(contentArea.children).forEach(child => {
       if (!child.classList.contains('ez-gmail-settings-panel')) {
-        // Restore ALL styles we modified
-        child.style.removeProperty('display');
-        child.style.removeProperty('height');
-        child.style.removeProperty('min-height');
-        child.style.removeProperty('max-height');
-        child.style.removeProperty('visibility');
-        child.style.removeProperty('opacity');
-        child.style.removeProperty('position');
-        child.style.removeProperty('z-index');
-        child.style.removeProperty('overflow');
-        child.removeAttribute('data-ez-hidden');
+        restoreHiddenElement(child);
       }
     });
     
@@ -1616,33 +2167,97 @@ class SettingsIntegration {
     const ezTab = document.querySelector('.ez-gmail-horizontal-tab');
     if (!ezTab) return;
     
+    // Re-attach click handler in case Gmail removed it
+    // Use capture phase to intercept BEFORE Gmail's handler
+    if (!ezTab.hasAttribute('data-ez-click-attached')) {
+      ezTab.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        console.log('Ez Gmail: Tab clicked - navigating to /ezgmail');
+        if (window.location.hash === '#settings/ezgmail') {
+          this._lastEzGmailNav = Date.now();
+          this.showEzGmailSettings();
+        } else {
+          window.location.hash = '#settings/ezgmail';
+        }
+        return false;
+      }, { capture: true });
+      ezTab.setAttribute('data-ez-click-attached', 'true');
+      console.log('Ez Gmail: ✓ Re-attached click handler to tab (capture phase)');
+    }
+    
     let changed = false;
     
-    // Deactivate all other tabs AGGRESSIVELY
-    const allTabs = document.querySelectorAll('.fY .J-J5-Ji');
-    allTabs.forEach(tab => {
-      if (tab.classList.contains('ez-gmail-horizontal-tab')) {
-        // Activate our tab - let aKh class handle the styling
-        if (!tab.classList.contains('aKh')) {
-          tab.classList.add('aKh');
-          changed = true;
+    // Guard against re-entrancy: our own attribute writes trigger the tab
+    // MutationObserver, which would otherwise loop forever.
+    this._enforcingTab = true;
+    try {
+      // Deactivate all other tabs AGGRESSIVELY - but only write attributes
+      // when they actually differ, to avoid generating useless mutations.
+      const allTabs = this.getSettingsTabs(this.findTabsContainer());
+      allTabs.forEach(tab => {
+        if (tab.classList.contains('ez-gmail-horizontal-tab')) {
+          // Activate our tab - let aKh class handle the styling
+          if (tab.getAttribute('aria-selected') !== 'true') {
+            tab.setAttribute('aria-selected', 'true');
+            changed = true;
+          }
+          if (tab.getAttribute('tabindex') !== '0') {
+            tab.setAttribute('tabindex', '0');
+          }
+          // Gmail's new tab markup renders the active indicator as an
+          // inset blue box-shadow (.v .f1 .v .f2) - apply it directly
+          // since the old aKh class no longer provides it. Also keep the
+          // blue text - anything that clears it leaves the tab black.
+          tab.style.setProperty('box-shadow', 'inset 0 -2px 0 0 #1a73e8', 'important');
+          tab.style.setProperty('color', '#1a73e8', 'important');
+          // Strip aKh if Gmail slapped it on - it carries height:56px
+          // which inflates the whole tab row.
+          if (tab.classList.contains('aKh')) {
+            tab.classList.remove('aKh');
+            changed = true;
+          }
+          if (tab.style.height !== 'auto') {
+            tab.style.setProperty('height', 'auto', 'important');
+          }
+        } else {
+          // Deactivate other tabs FORCEFULLY
+          if (tab.classList.contains('aKh')) {
+            tab.classList.remove('aKh');
+            changed = true;
+          }
+          if (tab.getAttribute('aria-selected') !== 'false') {
+            tab.setAttribute('aria-selected', 'false');
+            changed = true;
+          }
+          if (tab.getAttribute('tabindex') !== '-1') {
+            tab.setAttribute('tabindex', '-1');
+          }
+          // Neutralize the selected look WITHOUT touching Gmail's
+          // classes - inline !important overrides the .fZ-cell styles
+          // (blue text, underline) while leaving Gmail's selection
+          // machinery fully intact.
+          tab.style.setProperty('color', '#5f6368', 'important');
+          if (tab.style.cursor !== 'pointer') {
+            tab.style.setProperty('cursor', 'pointer');
+          }
+          if (tab.style.boxShadow !== 'none') {
+            tab.style.setProperty('box-shadow', 'none', 'important');
+          }
+          const cell = tab.parentElement;
+          if (cell && cell !== document.body &&
+              cell.querySelectorAll('.J-J5-Ji, [role="tab"]').length === 1) {
+            if (cell.style.boxShadow !== 'none') {
+              cell.style.setProperty('box-shadow', 'none', 'important');
+            }
+            cell.style.setProperty('border-bottom-color', 'transparent', 'important');
+          }
         }
-        tab.setAttribute('aria-selected', 'true');
-        tab.setAttribute('tabindex', '0');
-        // Don't force box-shadow - let Gmail's aKh class handle it
-        tab.style.removeProperty('box-shadow');
-      } else {
-        // Deactivate other tabs FORCEFULLY
-        if (tab.classList.contains('aKh')) {
-          tab.classList.remove('aKh');
-          changed = true;
-        }
-        tab.setAttribute('aria-selected', 'false');
-        tab.setAttribute('tabindex', '-1');
-        tab.style.removeProperty('color');
-        tab.style.removeProperty('box-shadow');
-      }
-    });
+      });
+    } finally {
+      this._enforcingTab = false;
+    }
     
     if (changed) {
       console.log('Ez Gmail: ✓ Enforced Ez Gmail tab active state');
@@ -1663,16 +2278,22 @@ class SettingsIntegration {
       
       // SIMPLE LOGIC: Show our panel if hash contains 'ezgmail', hide otherwise
       if (hash.includes('ezgmail')) {
+        this._lastEzGmailNav = Date.now();
         console.log('Ez Gmail: ✓ Hash contains ezgmail - showing our panel');
         setTimeout(() => this.showEzGmailSettings(), 100);
-      } else if (hash === '#settings' && this.ezGmailSettingsActive) {
-        // Gmail stripped /ezgmail from URL but our panel is active
-        // DON'T fight the hash - just maintain visibility
-        console.log('Ez Gmail: ⚠ Gmail stripped /ezgmail - maintaining visibility without fighting');
-        
-        // Just ensure our tab stays active and content visible
-        // The protection observer will keep our panel visible
-        this.enforceTabState();
+      } else if ((hash === '#settings' || hash === '#settings/') &&
+                 (this.ezGmailSettingsActive ||
+                  (Date.now() - (this._lastEzGmailNav || 0) < 1500))) {
+        // Gmail stripped /ezgmail right after we navigated to it - this
+        // bare #settings still means OUR page. Don't fight the hash and
+        // DON'T restore Gmail's content (that race used to strand users
+        // on another tab when they clicked back to Ez Gmail).
+        console.log('Ez Gmail: ⚠ bare #settings - still our page, maintaining');
+        if (this.ezGmailSettingsActive) {
+          this.enforceTabState();
+        } else {
+          setTimeout(() => this.showEzGmailSettings(), 150);
+        }
       } else if (hash.includes('settings')) {
         // On other settings pages (like #settings/general, #settings/labels) - hide our panel
         console.log('Ez Gmail: On other settings page - hiding our panel');
@@ -1697,18 +2318,22 @@ class SettingsIntegration {
       } else {
         // Not on settings at all - clean up
         console.log('Ez Gmail: Not on settings - cleaning up');
+        this.settingsTabAdded = false; // allow re-add on next settings visit
         
-        // Mark as inactive
-        this.ezGmailSettingsActive = false;
-        
+        // Disconnect observer FIRST before marking inactive
         if (this.protectionObserver) {
           try {
             this.protectionObserver.disconnect();
             this.protectionObserver = null;
+            console.log('Ez Gmail: ✓ Protection observer disconnected for inbox');
           } catch (e) {
-            console.warn('Ez Gmail: Error disconnecting observer:', e);
+            console.error('Ez Gmail: Error disconnecting observer:', e);
           }
         }
+        
+        // Mark as inactive AFTER disconnecting observer
+        this.ezGmailSettingsActive = false;
+        console.log('Ez Gmail: ✓ Marked as inactive');
         
         // Remove our panel
         const ezPanel = document.querySelector('.ez-gmail-settings-panel');
@@ -1721,16 +2346,45 @@ class SettingsIntegration {
                            document.querySelector('[role="main"]') ||
                            document.querySelector('.nH.w-asV.aiw');
         if (contentArea) {
-          contentArea.style.removeProperty('min-height');
-          contentArea.style.removeProperty('padding');
+          // Force clear by manipulating cssText
+          const contentStyles = contentArea.getAttribute('style') || '';
+          contentArea.setAttribute('style', contentStyles
+            .replace(/min-height:\s*[^;]+;?/gi, '')
+            .replace(/padding(-top|-bottom)?:\s*[^;]+;?/gi, ''));
           
           const parentContainer = contentArea.closest('.nH');
           if (parentContainer) {
-            parentContainer.style.removeProperty('min-height');
-            parentContainer.style.removeProperty('padding-top');
-            parentContainer.style.removeProperty('padding-bottom');
+            const parentStyles = parentContainer.getAttribute('style') || '';
+            parentContainer.setAttribute('style', parentStyles
+              .replace(/min-height:\s*[^;]+;?/gi, '')
+              .replace(/padding(-top|-bottom)?:\s*[^;]+;?/gi, ''));
           }
-          console.log('Ez Gmail: ✓ Restored content area and parent container styles');
+          
+          // CRITICAL: Also restore all child elements that we hid
+          // Search for ALL elements with !important styles (including nested)
+          const allElements = contentArea.querySelectorAll('*');
+          let restoredCount = 0;
+          allElements.forEach(element => {
+            if (!this.isExtensionElement(element)) {
+              const hasEzStyles = element.hasAttribute('data-ez-hidden') || 
+                                 (element.getAttribute('style') || '').includes('!important');
+              
+              if (hasEzStyles) {
+                element.removeAttribute('style');
+                element.removeAttribute('data-ez-hidden');
+                restoredCount++;
+              }
+            }
+          });
+          console.log(`Ez Gmail: Removed inline styles from ${restoredCount} elements`);
+          
+          console.log('Ez Gmail: ✓ Force-cleared content area, parent container, and all child element styles for inbox');
+        }
+        
+        // The nav bar was removed from the DOM while on settings - let
+        // GmailNavigation re-create it now that we're on a normal page.
+        if (window.ezGmailNavigation && typeof window.ezGmailNavigation.init === 'function') {
+          window.ezGmailNavigation.init();
         }
       }
     });
@@ -1739,6 +2393,28 @@ class SettingsIntegration {
   // Cleanup
   destroy() {
     console.log('Ez Gmail: Destroying SettingsIntegration...');
+    
+    this.ezGmailSettingsActive = false;
+    
+    // Stop enforcement interval
+    if (this.enforcementInterval) {
+      clearInterval(this.enforcementInterval);
+      this.enforcementInterval = null;
+    }
+    
+    // Disconnect protection observer
+    if (this.protectionObserver) {
+      try {
+        this.protectionObserver.disconnect();
+      } catch (e) { /* ignore */ }
+      this.protectionObserver = null;
+    }
+    
+    // Disconnect tab state observer
+    if (this.tabObserver) {
+      try { this.tabObserver.disconnect(); } catch (e) { /* ignore */ }
+      this.tabObserver = null;
+    }
     
     if (this.observer) {
       this.observer.disconnect();

@@ -53,7 +53,11 @@ async function initializeExtension() {
     
     // Initialize settings integration
     if (typeof SettingsIntegration !== 'undefined') {
-      settingsIntegration = new SettingsIntegration();
+      // Reuse the global instance created by settings-integration.js bootstrap
+      // to avoid duplicate observers/listeners (double init caused stale
+      // MutationObservers that hid Gmail content after navigation).
+      settingsIntegration = window.ezGmailSettings || new SettingsIntegration();
+      window.ezGmailSettings = settingsIntegration;
       settingsIntegration.init();
       console.log("Ez Gmail: Settings integration initialized");
     }
@@ -66,6 +70,7 @@ async function initializeExtension() {
     // Wait for Gmail to load
     waitForGmailLoad().then(() => {
       gmailNavigation = new GmailNavigation(settings);
+      window.ezGmailNavigation = gmailNavigation;
       gmailNavigation.init();
       console.log("Gmail navigation initialized");
       

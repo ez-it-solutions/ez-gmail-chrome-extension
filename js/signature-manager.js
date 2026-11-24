@@ -23,7 +23,11 @@ class SignatureManager {
     if (this.signatures.length === 0) {
       await this.createDefaultSignatures();
     }
-    
+
+    // Keep default templates in sync with the code - signatures are
+    // persisted, so template fixes would otherwise never reach them.
+    this.refreshDefaultTemplates();
+
     this.initialized = true;
     console.log('Ez Gmail: Signature manager initialized with', this.signatures.length, 'signatures');
   }
@@ -56,26 +60,29 @@ class SignatureManager {
 
   // Get default user profile structure
   getDefaultProfile() {
+    // Seeded from the Jacksonville College signature this extension
+    // ships with - scraping (ensureProfile) refines these from the
+    // live signature when it can, but nothing renders blank.
     return {
-      fullName: '',
-      firstName: '',
-      lastName: '',
-      title: '',
-      subtitle: '',
-      company: '',
-      phone: '',
+      fullName: 'Chris Hultberg',
+      firstName: 'Chris',
+      lastName: 'Hultberg',
+      title: 'Director of Systems and Technology',
+      subtitle: 'Chief Information Officer',
+      company: 'Jacksonville College',
+      phone: '(903) 589-7101',
       mobile: '',
-      email: '',
-      website: '',
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
+      email: 'chultberg@jacksonville-college.edu',
+      website: 'https://www.jacksonville-college.edu/',
+      address: '105 B.J. Albritton',
+      city: 'Jacksonville',
+      state: 'TX',
+      zip: '75766',
       socialLinks: {
-        facebook: '',
-        instagram: '',
-        twitter: '',
-        linkedin: '',
+        facebook: 'https://www.facebook.com/jacksonvillecollege',
+        instagram: 'https://www.instagram.com/jvillecollege/',
+        twitter: 'https://twitter.com/jvillecollege',
+        linkedin: 'https://www.linkedin.com/in/chris-hultberg/',
         youtube: ''
       },
       customFields: {}
@@ -134,6 +141,29 @@ class SignatureManager {
     
     await this.saveToStorage();
     console.log('Ez Gmail: Default signatures created');
+  }
+
+  // Overwrite the HTML of stored DEFAULT signatures with the current
+  // code templates (keyed by name) so code updates take effect for
+  // existing installs. User-created signatures are untouched.
+  refreshDefaultTemplates() {
+    const templates = {
+      'Jacksonville College - Professional': this.getJacksonvilleCollegeSignature(),
+      'Simple Professional': this.getSimpleProfessionalSignature(),
+      'Minimal': this.getMinimalSignature()
+    };
+    let changed = false;
+    this.signatures.forEach(sig => {
+      if (sig.isDefault && templates[sig.name] && sig.html !== templates[sig.name]) {
+        sig.html = templates[sig.name];
+        sig.updatedAt = Date.now();
+        changed = true;
+      }
+    });
+    if (changed) {
+      this.saveToStorage();
+      console.log('Ez Gmail: Default signature templates refreshed');
+    }
   }
 
   // Get Jacksonville College signature HTML
@@ -243,14 +273,14 @@ class SignatureManager {
 
   // Get simple professional signature HTML
   getSimpleProfessionalSignature() {
-    return `<div style="font-family: Arial, sans-serif; font-size: 14px; color: #333; margin-top: 20px;">
-  <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">{{fullName}}</div>
-  <div style="color: #7f8c8d; margin-top: 5px;">{{title}}</div>
-  <div style="color: #7f8c8d;">{{company}}</div>
-  <div style="margin-top: 10px;">
-    <div><a href="tel:{{phone}}" style="color: #3498db; text-decoration: none;">{{phone}}</a></div>
-    <div><a href="mailto:{{email}}" style="color: #3498db; text-decoration: none;">{{email}}</a></div>
-    <div><a href="{{website}}" style="color: #3498db; text-decoration: none;" target="_blank">{{website}}</a></div>
+    return `<div style="font-family: Arial, sans-serif; font-size: 14px; color: #333; margin-top: 24px;">
+  <div style="font-weight: 700; font-size: 16px; color: #2c3e50;">{{fullName}}</div>
+  <div style="color: #7f8c8d; margin-top: 2px;">{{title}}</div>
+  <div style="color: #7f8c8d; margin-bottom: 14px;">{{company}}</div>
+  <div style="line-height: 1.7;">
+    <div><a href="tel:{{phone}}" style="color: #1a73e8; text-decoration: none;">{{phone}}</a></div>
+    <div><a href="mailto:{{email}}" style="color: #1a73e8; text-decoration: none;">{{email}}</a></div>
+    <div><a href="{{website}}" style="color: #1a73e8; text-decoration: none;" target="_blank">{{website}}</a></div>
   </div>
 </div>`;
   }
@@ -419,6 +449,297 @@ class SignatureManager {
   // Get signatures by category
   getSignaturesByCategory(category) {
     return this.signatures.filter(sig => sig.category === category);
+  }
+
+  // Find where a signature should be placed in the open compose window.
+  // Prefers Gmail's own signature container (div.gmail_signature);
+  // falls back to the editable compose body to append one.
+  // scope lets callers restrict the search to one compose window.
+  findSignatureTarget(scope = document) {
+    const sigs = Array.from(
+      scope.querySelectorAll('div.gmail_signature')
+    ).filter(el => el.offsetParent !== null);
+    if (sigs.length) return sigs[sigs.length - 1];
+
+    const bodies = Array.from(
+      scope.querySelectorAll('div[contenteditable="true"]')
+    ).filter(el => el.offsetParent !== null && el.getAttribute('aria-label'));
+    return bodies[bodies.length - 1] || null;
+  }
+
+  // Populate ezUserProfile by scraping the signature Gmail already
+  // inserted (it contains the real name, title, phone, links, address)
+  // plus the Google Account button for name/email. Only fills fields
+  // that are currently empty - user-saved values always win.
+  // Reject junk values - a bad scrape once wrote whole-paragraph text
+  // into title/company, so treat anything overlong or multi-line as
+  // empty (forces a fresh scrape).
+  isCleanValue(v, maxLen = 120) {
+    return typeof v === 'string' && v.trim() &&
+           v.length <= maxLen && !/[\n\r]/.test(v);
+  }
+
+  async ensureProfile(existingSigEl = null) {
+    const p = this.userProfile || {};
+    // Discard polluted fields from earlier bad scrapes - overlong,
+    // multi-line, or containing the full name mashed into other text
+    // (the 'Chris HultbergDirector...' run-on bug).
+    ['fullName', 'title', 'subtitle', 'company', 'address',
+     'phone', 'email', 'website'].forEach(k => {
+      if (p[k] && !this.isCleanValue(p[k])) p[k] = '';
+    });
+    if (p.title && p.fullName && p.title !== p.fullName &&
+        p.title.includes(p.fullName)) {
+      p.title = '';
+    }
+    ['title', 'subtitle', 'company'].forEach(k => {
+      if (p[k] && /IMPORTANT:|confidential|disciples/i.test(p[k])) p[k] = '';
+    });
+
+    const needs = !p.fullName || !p.email || !p.phone || !p.title;
+    if (!needs) return;
+
+    const scraped = existingSigEl ? this.scrapeSignature(existingSigEl) : {};
+
+    // "Google Account: Name (email@domain.com)" on the top-right button
+    let acctName = '', acctEmail = '';
+    const acctBtn = document.querySelector('a[aria-label^="Google Account"]');
+    const m = (acctBtn?.getAttribute('aria-label') || '')
+      .match(/:\s*(.+?)\s*\(([^)]+@[^)]+)\)/);
+    if (m) { acctName = m[1].trim(); acctEmail = m[2].trim(); }
+
+    const base = this.getDefaultProfile();
+    this.userProfile = {
+      ...base,
+      ...p,
+      fullName: p.fullName || acctName || scraped.name || base.fullName,
+      email:    p.email    || acctEmail || scraped.email || base.email,
+      phone:    p.phone    || scraped.phone || base.phone,
+      title:    p.title    || scraped.title || base.title,
+      subtitle: p.subtitle || scraped.subtitle || base.subtitle,
+      company:  p.company  || scraped.company || base.company,
+      website:  p.website  || scraped.website || base.website,
+      address:  p.address  || scraped.address || base.address,
+      city:     p.city     || scraped.city || base.city,
+      state:    p.state    || scraped.state || base.state,
+      zip:      p.zip      || scraped.zip || base.zip,
+      socialLinks: Object.keys(base.socialLinks).reduce((acc, k) => {
+        acc[k] = (p.socialLinks && p.socialLinks[k]) ||
+                 (scraped.social && scraped.social[k]) ||
+                 base.socialLinks[k];
+        return acc;
+      }, {})
+    };
+    await this.saveToStorage();
+    console.log('Ez Gmail: Profile populated:', this.userProfile);
+  }
+
+  // Best-effort scrape of contact fields out of an existing
+  // div.gmail_signature element.
+  scrapeSignature(sigEl) {
+    const out = {};
+    try {
+      const tel = sigEl.querySelector('a[href^="tel:"]');
+      if (tel) out.phone = tel.textContent.trim();
+
+      const mail = sigEl.querySelector('a[href^="mailto:"]');
+      if (mail) out.email = mail.textContent.trim();
+
+      // Website: first http link that isn't social/maps
+      for (const a of sigEl.querySelectorAll('a[href^="http"]')) {
+        if (/facebook|instagram|twitter|linkedin|youtube|goo\.gl|maps\./
+            .test(a.href)) continue;
+        out.website = a.textContent.trim() || a.href;
+        break;
+      }
+
+      // Address lives inside the maps link, split on <br>
+      const maps = sigEl.querySelector('a[href*="maps"], a[href*="goo.gl"]');
+      if (maps) {
+        const lines = maps.innerText.split('\n')
+          .map(s => s.trim()).filter(Boolean);
+        if (lines[0]) out.address = lines[0];
+        const csz = (lines[1] || '').match(/^(.+?),\s*([A-Z]{2})\s+(\d{5})/);
+        if (csz) { out.city = csz[1]; out.state = csz[2]; out.zip = csz[3]; }
+      }
+
+      // Name: text node with the largest declared font-size
+      let maxFs = 0;
+      sigEl.querySelectorAll('td, div, span').forEach(el => {
+        const fs = parseFloat(el.style.fontSize || '');
+        if (fs > maxFs && el.childElementCount === 0 &&
+            el.textContent.trim()) {
+          maxFs = fs;
+          out.name = el.textContent.trim();
+        }
+      });
+
+      // Title/company block: a div whose ONLY element child is the <p>
+      // subtitle itself. Wrapper divs (dir=ltr) also have exactly one
+      // child but it is a div/table, not a p - check the tag.
+      const titleDiv = Array.from(sigEl.querySelectorAll('div')).find(d =>
+        d.childElementCount === 1 &&
+        d.children[0].tagName === 'P');
+      if (titleDiv) {
+        const sub = titleDiv.querySelector('p');
+        if (sub) out.subtitle = sub.textContent.trim();
+        const clone = titleDiv.cloneNode(true);
+        clone.querySelectorAll('p').forEach(x => x.remove());
+        const parts = clone.innerHTML.split(/<br\s*\/?>/i)
+          .map(s => s.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+        if (parts[0]) out.title = parts[0];
+        if (parts.length > 1) out.company = parts[parts.length - 1];
+      }
+
+      // Never let title echo the name, and drop overlong/messy values
+      if (out.title && out.name && out.title === out.name) delete out.title;
+      ['name', 'title', 'subtitle', 'company', 'phone', 'email',
+       'website', 'address'].forEach(k => {
+        if (out[k] && (out[k].length > 120 || /[\n\r]/.test(out[k]))) {
+          delete out[k];
+        }
+      });
+
+      // Social profile links
+      out.social = {};
+      const socialMap = {
+        facebook: 'a[href*="facebook.com"]',
+        instagram: 'a[href*="instagram.com"]',
+        twitter: 'a[href*="twitter.com"], a[href*="x.com"]',
+        linkedin: 'a[href*="linkedin.com"]',
+        youtube: 'a[href*="youtube.com"]'
+      };
+      Object.keys(socialMap).forEach(key => {
+        const a = sigEl.querySelector(socialMap[key]);
+        if (a) out.social[key] = a.href;
+      });
+    } catch (e) {
+      console.warn('Ez Gmail: Signature scrape failed (non-fatal)', e);
+    }
+    return out;
+  }
+
+  // Replace the compose window's signature with the given signature id.
+  async applySignature(signatureId, scope = document) {
+    const target = this.findSignatureTarget(scope);
+    if (!target) {
+      console.warn('Ez Gmail: No compose window or signature found');
+      return false;
+    }
+
+    // Scrape the CURRENT signature before we overwrite it - that is our
+    // best source of truth for the user's contact details.
+    const sigEl = target.classList.contains('gmail_signature') ? target :
+                  target.querySelector('div.gmail_signature');
+    await this.ensureProfile(sigEl);
+
+    const html = await this.getProcessedSignature(signatureId);
+    if (!html) return false;
+
+    let body = null;
+    if (target.classList.contains('gmail_signature')) {
+      // Swap the contents of Gmail's own signature container
+      target.innerHTML = html;
+      body = target.closest('[contenteditable="true"]');
+    } else {
+      // No signature present - append one inside a proper container
+      const wrap = document.createElement('div');
+      wrap.className = 'gmail_signature';
+      wrap.setAttribute('data-smartmail', 'gmail_signature');
+      wrap.innerHTML = html;
+      target.appendChild(wrap);
+      body = target;
+    }
+
+    // Let Gmail's editor know the body changed
+    if (body) {
+      body.dispatchEvent(new Event('input', { bubbles: true }));
+      body.dispatchEvent(new Event('keyup', { bubbles: true }));
+    }
+    return true;
+  }
+
+  // Apply the ACTIVE signature to a newly-opened compose window.
+  // Gmail inserts its own configured signature first - we replace it
+  // once the gmail_signature container exists (it can render late).
+  async autoApplyToCompose(composeEl) {
+    try {
+      await this.init();
+      const sig = this.getActiveSignature();
+      if (!sig || !composeEl) return;
+
+      const tryApply = async () => {
+        const target = this.findSignatureTarget(composeEl);
+        if (!target) return false;
+        return await this.applySignature(sig.id, composeEl);
+      };
+
+      if (!(await tryApply())) {
+        setTimeout(() => tryApply(), 700);
+        setTimeout(() => tryApply(), 1600);
+      }
+    } catch (e) {
+      console.warn('Ez Gmail: Auto-apply signature failed (non-fatal)', e);
+    }
+  }
+
+  // Show the signature picker modal and apply the user's choice.
+  async showSignatureSwitcher() {
+    await this.init();
+
+    const signatures = this.getAllSignatures();
+    if (!signatures.length) {
+      console.warn('Ez Gmail: No signatures configured');
+      return;
+    }
+
+    document.getElementById('ez-signature-switcher-modal')?.remove();
+
+    const esc = s => String(s || '').replace(/[&<>"']/g,
+      c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const modal = document.createElement('div');
+    modal.id = 'ez-signature-switcher-modal';
+    modal.className = 'ez-modal';
+    modal.innerHTML = `
+      <div class="ez-modal-content" style="max-width: 420px">
+        <div class="ez-modal-header">
+          <h3>Switch Signature</h3>
+          <button class="ez-modal-close">&times;</button>
+        </div>
+        <div class="ez-modal-body" style="padding-top: 8px">
+          <div class="ez-sig-error" style="display:none;color:#d93025;font-size:13px;margin-bottom:8px"></div>
+          ${signatures.map(s => `
+            <button class="ez-date-btn ez-signature-choice" data-sig="${esc(s.id)}"
+                    style="display:block;width:100%;text-align:left;margin-bottom:8px;min-width:0;border-radius:12px">
+              <div style="font-weight:500">
+                ${s.id === this.activeSignatureId ? '✓ ' : ''}${esc(s.name)}
+              </div>
+              ${s.description ? `<div style="font-size:12px;color:#80868b;font-weight:400;margin-top:2px">${esc(s.description)}</div>` : ''}
+            </button>`).join('')}
+        </div>
+      </div>`;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('.ez-modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    modal.querySelectorAll('.ez-signature-choice').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-sig');
+        const ok = await this.applySignature(id);
+        if (ok) {
+          await this.setActiveSignature(id);
+          console.log('Ez Gmail: Signature switched to', btn.textContent.trim());
+          modal.remove();
+        } else {
+          const err = modal.querySelector('.ez-sig-error');
+          err.textContent = 'No compose window found - open a new message first.';
+          err.style.display = 'block';
+        }
+      });
+    });
   }
 
   // Generate unique ID

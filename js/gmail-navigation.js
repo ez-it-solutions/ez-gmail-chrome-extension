@@ -340,6 +340,11 @@ class GmailNavigation {
     // Add data attributes to mark this as extension content
     nav.setAttribute('data-ez-gmail', 'true');
     nav.setAttribute('data-extension-element', 'true');
+
+    // This bar has brand-new DOM elements - any listeners attached to a
+    // previous (now removed) bar are gone with it. Reset the flag so
+    // setupEventListeners() wires up these buttons instead of skipping.
+    this.listenersAttached = false;
     
     // Force initial display style to ensure proper rendering
     nav.style.cssText = 'display: block !important; visibility: visible !important;';
@@ -423,28 +428,35 @@ class GmailNavigation {
     let pages = [];
     
     if (style === 'full') {
-      // Show more pages around current
-      const start = Math.max(1, current - Math.floor(maxVisible / 2));
-      const end = Math.min(max, start + maxVisible - 1);
-      
-      if (start > 1) {
-        pages.push(1);
-        if (start > 2) pages.push('...');
+      // Windowed pager, fixed width - page 1 and the last page are
+      // always visible:
+      //   near start: 1 2 3 4 5 6 7 8 9 10 ... 817
+      //   middle:     1 ... 410 411 412 413 414 ... 817
+      //   near end:   1 ... 812 813 814 815 816 817
+      const leadEnd = Math.min(maxVisible, max);       // first ~10 pages
+      const tailStart = max;                           // just the last page
+      const lo = Math.max(1, current - 2);
+      const hi = Math.min(max, current + 2);
+
+      const nums = new Set();
+      if (current <= leadEnd - 2) {
+        // Near the start: full leading block - but only while the
+        // current-page window still fits inside it, otherwise the
+        // combined list overflows into the arrows.
+        for (let i = 1; i <= leadEnd; i++) nums.add(i);
+      } else {
+        // Deep in the mailbox: just page 1 - keeps the bar narrow
+        nums.add(1);
       }
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      
-      // Instead of showing the last page number (which >> does),
-      // show a forward jump page (current + 10)
-      if (end < max) {
-        if (end < max - 1) pages.push('...');
-        // Show a forward jump instead of last page
-        const forwardJump = Math.min(current + 10, max);
-        if (forwardJump > end && forwardJump < max) {
-          pages.push(forwardJump);
-        }
+      for (let i = lo; i <= hi; i++) nums.add(i);
+      for (let i = tailStart; i <= max; i++) nums.add(i);
+
+      const sorted = Array.from(nums).sort((a, b) => a - b);
+      let prev = 0;
+      for (const n of sorted) {
+        if (prev && n - prev > 1) pages.push({ from: prev, to: n });
+        pages.push(n);
+        prev = n;
       }
     } else if (style === 'compact') {
       // Show: 1, ..., current-1, current, current+1, ..., current+10
@@ -462,11 +474,23 @@ class GmailNavigation {
     }
     
     pages.forEach(page => {
-      if (page === '...') {
-        const span = document.createElement('span');
-        span.className = 'ez-nav-ellipsis';
-        span.textContent = '...';
-        pagesContainer.appendChild(span);
+      if (page === '...' || (page && typeof page === 'object')) {
+        // Clickable ellipsis - focuses the 'Page #' jump box so the
+        // user can type the page they want.
+        const btn = document.createElement('button');
+        btn.className = 'ez-nav-ellipsis ez-nav-ellipsis-btn';
+        btn.textContent = '...';
+        if (typeof page === 'object') {
+          btn.title = `Jump to a page between ${page.from} and ${page.to}`;
+          btn.addEventListener('click', () => {
+            const input = document.getElementById('ez-nav-jump-input');
+            if (input) {
+              input.focus();
+              input.select();
+            }
+          });
+        }
+        pagesContainer.appendChild(btn);
       } else {
         const btn = document.createElement('button');
         btn.className = 'ez-nav-page-btn';
@@ -588,7 +612,7 @@ class GmailNavigation {
           <div class="ez-date-picker">
             <label>Select Specific Date:</label>
             <div class="ez-date-input-row">
-              <input type="date" id="ez-date-input" />
+              <input type="date" id="ez-date-input" value="${new Date().toISOString().split('T')[0]}" />
               <select id="ez-date-mode">
                 <option value="single">Emails on this date</option>
                 <option value="after">Emails from this date onwards</option>

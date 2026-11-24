@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-11-23
+
+### 🔧 Settings Stability & Gmail DOM Compatibility
+
+Bug-fix release addressing the Ez Gmail settings tab after Gmail rolled out markup changes.
+
+### Fixed
+
+- **Tabs container not found** (`Tabs container (.fY) not found!`): all lookups for Gmail's settings tab bar now go through a resilient `findTabsContainer()` helper with `.fY`, `.J-J5-Ji` parent, `[role="tablist"]`, and `[role="tab"]` fallbacks.
+- **Ez Gmail tab not found anywhere**: `showEzGmailSettings()` now re-adds the tab via `addHorizontalTab()` when Gmail re-renders the tab bar and drops it, instead of only logging an error.
+- **Corrupted `addQuickLinks()`**: `innerHTML` template was accidentally embedded inside the `cssText` template literal, producing an empty quick-links container with invalid CSS. Restored the Templates button and wired it to the existing `openTemplates` background message.
+- **Unbounded retry loop**: `addHorizontalTab()` retries are now capped (20 attempts) and stop when not on a settings page.
+
+### Changed
+
+- Tabs container retry in `showEzGmailSettings()` schedules a single follow-up call instead of failing permanently.
+- Reduced error severity for recoverable tab-detection failures (console.warn instead of console.error).
+
+---
+
 ## [1.0.0] - 2026-01-16
 
 ### 🎉 Initial Release - The Breakthrough

@@ -148,7 +148,13 @@ class ComposeIntegration {
     
     // Mark this window as processed
     this.observedComposeWindows.add(windowId);
-    
+
+    // Swap Gmail's configured signature for the user's chosen
+    // Ez Gmail signature (the switcher choice persists per-compose).
+    if (window.EzGmailSignatureManager) {
+      window.EzGmailSignatureManager.autoApplyToCompose(composeWindow);
+    }
+
     console.log('Ez Gmail: Template button injected into compose window');
   }
 

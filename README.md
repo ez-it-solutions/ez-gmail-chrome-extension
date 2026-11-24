@@ -1,11 +1,22 @@
 # Ez Gmail - Chrome Extension
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Chrome-yellow.svg)
 ![Status](https://img.shields.io/badge/status-Active%20Development-green.svg)
 
 A powerful and beautiful Chrome extension that enhances your Gmail experience with advanced navigation, intelligent UI, smooth animations, and productivity tools. Streamline your email workflow and save time with Ez Gmail.
+
+## 🎉 What's New in v2.2
+
+### 🛠️ **Settings Stability & Gmail Compatibility**
+Bug-fix release focused on the Ez Gmail settings tab experience.
+
+- **Gmail DOM Compatibility**: Resilient settings-tab detection with fallbacks for Gmail's updated markup
+- **Auto-Recovery**: Ez Gmail tab re-adds itself if Gmail re-renders and removes it
+- **Reduced Console Noise**: Downgraded non-critical warnings and trimmed repetitive logging
+- **Quick Links Fix**: Repaired corrupted quick-links block on the settings page
+- **Memory**: Enforcement interval now stops when leaving settings pages
 
 ## 🎉 What's New in v2.1
 
