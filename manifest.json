@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Ez Gmail",
-  "version": "1.0.0",
-  "description": "Enhance your Gmail experience with quick actions, templates, and productivity tools.",
+  "version": "2.2.0",
+  "description": "Enhance your Gmail experience with quick actions, templates, and productivity tools. v2.2 - Settings Stability & Gmail DOM Compatibility.",
   "author": "Ez IT Solutions",
   "homepage_url": "http://www.Ez-IT-Solutions.com",
   "permissions": [
@@ -11,7 +11,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://mail.google.com/*"
+    "https://mail.google.com/*",
+    "https://bible-api.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -35,13 +36,24 @@
     {
       "matches": ["https://mail.google.com/*"],
       "js": [
+        "js/utils/cleanup-manager.js",
         "js/settings.js",
+        "js/verse-quotes.js",
+        "js/verse-presets.js",
+        "js/template-library.js",
+        "js/template-manager.js",
+        "js/profile-manager.js",
+        "js/signature-manager.js",
+        "js/template-ui.js",
+        "js/compose-integration.js",
         "js/gmail-navigation.js",
+        "js/settings-integration.js",
         "js/content.js"
       ],
       "css": [
         "css/gmail-enhancements.css",
-        "css/gmail-navigation.css"
+        "css/gmail-navigation.css",
+        "css/templates.css"
       ],
       "run_at": "document_start"
     }

@@ -7,20 +7,70 @@ console.log("Ez Gmail content script loaded");
 // Load settings and initialize
 let settings = null;
 let gmailNavigation = null;
+let templateManager = null;
+let profileManager = null;
+let templateUI = null;
+let composeIntegration = null;
+let settingsIntegration = null;
 
 async function initializeExtension() {
-  // Load settings
-  const settingsManager = new SettingsManager();
-  await settingsManager.init();
-  settings = settingsManager.getAll();
-  
-  console.log("Ez Gmail settings loaded:", settings);
+  try {
+    // Load settings
+    const settingsManager = new SettingsManager();
+    await settingsManager.init();
+    settings = settingsManager.getAll();
+    
+    console.log("Ez Gmail settings loaded:", settings);
+    
+    // Initialize template system
+    if (typeof TemplateManager !== 'undefined') {
+      templateManager = window.EzGmailTemplateManager || new TemplateManager();
+      await templateManager.init();
+      console.log("Ez Gmail: Template Manager initialized");
+    } else {
+      console.error("Ez Gmail: TemplateManager class not found");
+    }
+    
+    // Initialize profile system
+    if (typeof ProfileManager !== 'undefined') {
+      profileManager = window.EzGmailProfileManager || new ProfileManager();
+      await profileManager.init();
+      console.log("Ez Gmail: Profile Manager initialized");
+    } else {
+      console.warn("Ez Gmail: ProfileManager class not found - profiles will be disabled");
+    }
+    
+    // Initialize template UI
+    if (templateManager) {
+      templateUI = new TemplateUI(templateManager, profileManager);
+      
+      // Initialize compose integration
+      composeIntegration = new ComposeIntegration(templateUI);
+      composeIntegration.init();
+      
+      console.log("Ez Gmail template system initialized");
+    }
+    
+    // Initialize settings integration
+    if (typeof SettingsIntegration !== 'undefined') {
+      // Reuse the global instance created by settings-integration.js bootstrap
+      // to avoid duplicate observers/listeners (double init caused stale
+      // MutationObservers that hid Gmail content after navigation).
+      settingsIntegration = window.ezGmailSettings || new SettingsIntegration();
+      window.ezGmailSettings = settingsIntegration;
+      settingsIntegration.init();
+      console.log("Ez Gmail: Settings integration initialized");
+    }
+  } catch (error) {
+    console.error("Ez Gmail: Error initializing template system:", error);
+  }
   
   // Initialize navigation system
-  if (settings.navigation.enabled) {
+  if (settings && settings.navigation && settings.navigation.enabled) {
     // Wait for Gmail to load
     waitForGmailLoad().then(() => {
       gmailNavigation = new GmailNavigation(settings);
+      window.ezGmailNavigation = gmailNavigation;
       gmailNavigation.init();
       console.log("Gmail navigation initialized");
       
@@ -256,3 +306,48 @@ document.addEventListener('keydown', (e) => {
 });
 
 console.log("Ez Gmail keyboard shortcuts enabled (Ctrl+Shift+C for compose, Ctrl+Shift+F for search)");
+
+// Cleanup on page unload to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+  console.log('Ez Gmail: Page unloading, cleaning up...');
+  
+  // Destroy all components
+  if (composeIntegration && typeof composeIntegration.destroy === 'function') {
+    composeIntegration.destroy();
+  }
+  
+  if (settingsIntegration && typeof settingsIntegration.destroy === 'function') {
+    settingsIntegration.destroy();
+  }
+  
+  if (gmailNavigation && typeof gmailNavigation.destroy === 'function') {
+    gmailNavigation.destroy();
+  }
+  
+  if (templateUI && typeof templateUI.destroy === 'function') {
+    templateUI.destroy();
+  }
+  
+  // Run global cleanup manager
+  if (window.EzGmailCleanup) {
+    window.EzGmailCleanup.cleanupAll();
+  }
+  
+  console.log('Ez Gmail: Cleanup complete');
+});
+
+// Also register components with cleanup manager
+if (window.EzGmailCleanup) {
+  if (composeIntegration) {
+    window.EzGmailCleanup.registerComponent(composeIntegration, 'ComposeIntegration');
+  }
+  if (settingsIntegration) {
+    window.EzGmailCleanup.registerComponent(settingsIntegration, 'SettingsIntegration');
+  }
+  if (gmailNavigation) {
+    window.EzGmailCleanup.registerComponent(gmailNavigation, 'GmailNavigation');
+  }
+  if (templateUI) {
+    window.EzGmailCleanup.registerComponent(templateUI, 'TemplateUI');
+  }
+}

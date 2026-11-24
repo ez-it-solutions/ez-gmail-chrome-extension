@@ -34,6 +34,94 @@ class GmailNavigation {
     return 1;
   }
   
+  // Check if we're viewing an individual email (not a list view)
+  isViewingEmail() {
+    const hash = window.location.hash;
+    
+    // Method 1: Check URL pattern
+    // Individual email patterns:
+    // #inbox/FMfcgzQXJPqGLbBmKqTpTWNjvfpqWQvL (long ID = individual email)
+    // #sent/FMfcgzQXJPqGLbBmKqTpTWNjvfpqWQvL
+    // #label/Work/FMfcgzQXJPqGLbBmKqTpTWNjvfpqWQvL
+    
+    // List view patterns:
+    // #inbox
+    // #inbox/p2
+    // #sent
+    // #label/Work
+    // #search/query
+    
+    // If hash contains a long alphanumeric ID (16+ chars) that's NOT a page number
+    const emailIdPattern = /\/[a-zA-Z0-9_-]{16,}/;
+    const pagePattern = /\/p\d+/;
+    
+    // Check if it's a page number (list view)
+    if (pagePattern.test(hash)) {
+      return false;
+    }
+    
+    // Check if URL has email ID pattern
+    if (emailIdPattern.test(hash)) {
+      return true;
+    }
+    
+    // Method 2: Check for email content area in DOM
+    // Gmail shows email content in a specific container when viewing an email
+    const emailContentArea = document.querySelector('[role="main"] .nH.aHU') || // Email view container
+                             document.querySelector('.nH.aHU') || // Alternative selector
+                             document.querySelector('[data-message-id]'); // Message container
+    
+    // Method 3: Check if email list is hidden
+    const emailList = document.querySelector('.AO') || document.querySelector('[role="main"] table');
+    const isListHidden = emailList && window.getComputedStyle(emailList).display === 'none';
+    
+    // If we have email content area OR email list is hidden, we're viewing an email
+    return !!(emailContentArea || isListHidden);
+  }
+  
+  // Update navigation visibility based on current view
+  updateNavigationVisibility() {
+    const nav = this.navigationBar || document.getElementById('ez-gmail-navigation');
+    if (!nav) {
+      console.log('Ez Gmail: Navigation bar not found, cannot update visibility');
+      return;
+    }
+    
+    // Always hide on settings pages
+    if (this.isSettingsPage()) {
+      nav.style.setProperty('display', 'none', 'important');
+      console.log('Ez Gmail: ✓ Navigation hidden (settings page)');
+      return;
+    }
+    
+    const isEmail = this.isViewingEmail();
+    const hash = window.location.hash;
+    
+    console.log('Ez Gmail: Visibility check:', {
+      hash: hash,
+      isEmail: isEmail,
+      hasHidingClass: nav.classList.contains('ez-nav-hiding')
+    });
+    
+    if (isEmail) {
+      // Hide navigation with smooth animation when viewing individual email
+      nav.classList.add('ez-nav-hiding');
+      console.log('Ez Gmail: ✓ Hiding navigation with animation (viewing email)');
+      
+      // After animation completes (400ms), set display none to remove from layout
+      setTimeout(() => {
+        if (nav.classList.contains('ez-nav-hiding')) {
+          nav.style.setProperty('display', 'none', 'important');
+        }
+      }, 400);
+    } else {
+      // Show navigation with smooth animation when in list view
+      nav.classList.remove('ez-nav-hiding');
+      nav.style.setProperty('display', 'block', 'important');
+      console.log('Ez Gmail: ✓ Showing navigation with animation (list view)');
+    }
+  }
+  
   // Estimate total pages (Gmail doesn't provide this directly)
   estimateTotalPages() {
     // Try multiple selectors to find email count indicators
@@ -252,6 +340,11 @@ class GmailNavigation {
     // Add data attributes to mark this as extension content
     nav.setAttribute('data-ez-gmail', 'true');
     nav.setAttribute('data-extension-element', 'true');
+
+    // This bar has brand-new DOM elements - any listeners attached to a
+    // previous (now removed) bar are gone with it. Reset the flag so
+    // setupEventListeners() wires up these buttons instead of skipping.
+    this.listenersAttached = false;
     
     // Force initial display style to ensure proper rendering
     nav.style.cssText = 'display: block !important; visibility: visible !important;';
@@ -335,28 +428,35 @@ class GmailNavigation {
     let pages = [];
     
     if (style === 'full') {
-      // Show more pages around current
-      const start = Math.max(1, current - Math.floor(maxVisible / 2));
-      const end = Math.min(max, start + maxVisible - 1);
-      
-      if (start > 1) {
-        pages.push(1);
-        if (start > 2) pages.push('...');
+      // Windowed pager, fixed width - page 1 and the last page are
+      // always visible:
+      //   near start: 1 2 3 4 5 6 7 8 9 10 ... 817
+      //   middle:     1 ... 410 411 412 413 414 ... 817
+      //   near end:   1 ... 812 813 814 815 816 817
+      const leadEnd = Math.min(maxVisible, max);       // first ~10 pages
+      const tailStart = max;                           // just the last page
+      const lo = Math.max(1, current - 2);
+      const hi = Math.min(max, current + 2);
+
+      const nums = new Set();
+      if (current <= leadEnd - 2) {
+        // Near the start: full leading block - but only while the
+        // current-page window still fits inside it, otherwise the
+        // combined list overflows into the arrows.
+        for (let i = 1; i <= leadEnd; i++) nums.add(i);
+      } else {
+        // Deep in the mailbox: just page 1 - keeps the bar narrow
+        nums.add(1);
       }
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      
-      // Instead of showing the last page number (which >> does),
-      // show a forward jump page (current + 10)
-      if (end < max) {
-        if (end < max - 1) pages.push('...');
-        // Show a forward jump instead of last page
-        const forwardJump = Math.min(current + 10, max);
-        if (forwardJump > end && forwardJump < max) {
-          pages.push(forwardJump);
-        }
+      for (let i = lo; i <= hi; i++) nums.add(i);
+      for (let i = tailStart; i <= max; i++) nums.add(i);
+
+      const sorted = Array.from(nums).sort((a, b) => a - b);
+      let prev = 0;
+      for (const n of sorted) {
+        if (prev && n - prev > 1) pages.push({ from: prev, to: n });
+        pages.push(n);
+        prev = n;
       }
     } else if (style === 'compact') {
       // Show: 1, ..., current-1, current, current+1, ..., current+10
@@ -374,11 +474,23 @@ class GmailNavigation {
     }
     
     pages.forEach(page => {
-      if (page === '...') {
-        const span = document.createElement('span');
-        span.className = 'ez-nav-ellipsis';
-        span.textContent = '...';
-        pagesContainer.appendChild(span);
+      if (page === '...' || (page && typeof page === 'object')) {
+        // Clickable ellipsis - focuses the 'Page #' jump box so the
+        // user can type the page they want.
+        const btn = document.createElement('button');
+        btn.className = 'ez-nav-ellipsis ez-nav-ellipsis-btn';
+        btn.textContent = '...';
+        if (typeof page === 'object') {
+          btn.title = `Jump to a page between ${page.from} and ${page.to}`;
+          btn.addEventListener('click', () => {
+            const input = document.getElementById('ez-nav-jump-input');
+            if (input) {
+              input.focus();
+              input.select();
+            }
+          });
+        }
+        pagesContainer.appendChild(btn);
       } else {
         const btn = document.createElement('button');
         btn.className = 'ez-nav-page-btn';
@@ -451,7 +563,22 @@ class GmailNavigation {
     
     // Listen for URL changes
     window.addEventListener('hashchange', () => {
-      this.updateNavigationBar();
+      // Hide navigation if navigating to settings
+      if (this.isSettingsPage()) {
+        const navBar = document.getElementById('ez-gmail-navigation');
+        if (navBar) {
+          navBar.style.setProperty('display', 'none', 'important');
+          console.log('Ez Gmail: Navigation hidden - navigated to settings');
+        }
+      } else {
+        // Show navigation if navigating away from settings
+        const navBar = document.getElementById('ez-gmail-navigation');
+        if (navBar) {
+          navBar.style.display = '';
+          console.log('Ez Gmail: Navigation shown - navigated away from settings');
+        }
+        this.updateNavigationBar();
+      }
     });
     
     // Mark listeners as attached
@@ -485,7 +612,7 @@ class GmailNavigation {
           <div class="ez-date-picker">
             <label>Select Specific Date:</label>
             <div class="ez-date-input-row">
-              <input type="date" id="ez-date-input" />
+              <input type="date" id="ez-date-input" value="${new Date().toISOString().split('T')[0]}" />
               <select id="ez-date-mode">
                 <option value="single">Emails on this date</option>
                 <option value="after">Emails from this date onwards</option>
@@ -613,16 +740,29 @@ class GmailNavigation {
   enforceStyles(nav) {
     if (!nav) return;
     
+    // Check if we're on a settings page - if so, don't enforce visibility
+    if (this.isSettingsPage()) {
+      nav.style.setProperty('display', 'none', 'important');
+      return;
+    }
+    
     // Check if animation has completed
     const isLoaded = nav.classList.contains('ez-nav-loaded');
     
+    // Check if we're currently hiding the nav (viewing email)
+    const isHiding = nav.classList.contains('ez-nav-hiding');
+    const isHidden = nav.style.display === 'none';
+    
     // Force critical styles inline with highest priority
-    nav.style.setProperty('display', 'block', 'important');
-    nav.style.setProperty('visibility', 'visible', 'important');
+    // BUT respect visibility state - don't override if we're intentionally hiding
+    if (!isHiding && !isHidden) {
+      nav.style.setProperty('display', 'block', 'important');
+      nav.style.setProperty('visibility', 'visible', 'important');
+    }
     // Don't set position to avoid creating stacking context that blocks Gmail dropdowns
     
     // Don't override opacity/transform during animation
-    if (isLoaded) {
+    if (isLoaded && !isHiding && !isHidden) {
       nav.style.setProperty('opacity', '1', 'important');
     }
     
@@ -718,6 +858,11 @@ class GmailNavigation {
       subtree: true
     });
     
+    // Register with cleanup manager
+    if (window.EzGmailCleanup) {
+      window.EzGmailCleanup.registerObserver(this.styleObserver, 'GmailNavigation - Style Observer');
+    }
+    
     console.log('Ez Gmail: Style protection active');
   }
   
@@ -746,8 +891,21 @@ class GmailNavigation {
     });
   }
   
+  // Check if we're on a settings page
+  isSettingsPage() {
+    const hash = window.location.hash;
+    // Hide navigation on ALL settings pages (including Ez Gmail settings)
+    return hash.includes('#settings') || hash.includes('/settings');
+  }
+  
   // Initialize navigation
   async init() {
+    // Don't show navigation on settings pages
+    if (this.isSettingsPage()) {
+      console.log('Ez Gmail: Settings page detected, skipping navigation bar');
+      return;
+    }
+    
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
       console.log('Ez Gmail: Already initializing, skipping...');
@@ -835,6 +993,9 @@ class GmailNavigation {
       this.setupEventListeners();
       this.updateNavigationBar();
       
+      // Check visibility based on current view
+      this.updateNavigationVisibility();
+      
       // Verify layout is correct
       const container = nav.querySelector('.ez-nav-container');
       if (container) {
@@ -877,8 +1038,82 @@ class GmailNavigation {
     // Re-initialize on Gmail navigation changes
     this.observeGmailChanges();
     
+    // Monitor URL changes to update visibility
+    this.monitorUrlChanges();
+    
+    // Final check: hide if we're on a settings page
+    if (this.isSettingsPage()) {
+      const navBar = document.getElementById('ez-gmail-navigation');
+      if (navBar) {
+        navBar.style.setProperty('display', 'none', 'important');
+        console.log('Ez Gmail: Navigation hidden - on settings page');
+      }
+    }
+    
     console.log('Ez Gmail: Navigation bar initialized successfully');
     this.isInitializing = false;
+  }
+  
+  // Monitor URL changes (Gmail is a SPA, so we watch hash changes)
+  monitorUrlChanges() {
+    // Prevent duplicate event listeners
+    if (this.urlMonitoringActive) {
+      console.log('Ez Gmail: URL monitoring already active');
+      return;
+    }
+    this.urlMonitoringActive = true;
+    
+    // Watch for hash changes
+    window.addEventListener('hashchange', () => {
+      console.log('Ez Gmail: Hash changed -', window.location.hash);
+      // Small delay to let Gmail update the DOM
+      setTimeout(() => {
+        // Hide navigation on settings pages
+        if (this.isSettingsPage()) {
+          const nav = document.getElementById('ez-gmail-navigation');
+          if (nav) {
+            nav.style.display = 'none';
+          }
+        } else {
+          this.updateNavigationVisibility();
+          this.updateNavigationBar();
+        }
+      }, 100);
+    });
+    
+    // Also watch for history state changes (Gmail uses pushState)
+    const self = this;
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function() {
+      originalPushState.apply(history, arguments);
+      window.dispatchEvent(new Event('urlchange'));
+    };
+    
+    history.replaceState = function() {
+      originalReplaceState.apply(history, arguments);
+      window.dispatchEvent(new Event('urlchange'));
+    };
+    
+    window.addEventListener('urlchange', () => {
+      console.log('Ez Gmail: URL changed (pushState) -', window.location.hash);
+      // Small delay to let Gmail update the DOM
+      setTimeout(() => {
+        // Hide navigation on settings pages
+        if (self.isSettingsPage()) {
+          const nav = document.getElementById('ez-gmail-navigation');
+          if (nav) {
+            nav.style.display = 'none';
+          }
+        } else {
+          self.updateNavigationVisibility();
+          self.updateNavigationBar();
+        }
+      }, 100);
+    });
+    
+    console.log('Ez Gmail: URL monitoring initialized');
   }
   
   // Observe Gmail DOM changes to reinitialize if needed
@@ -936,10 +1171,55 @@ class GmailNavigation {
         subtree: false, // Only watch direct children
         attributes: false
       });
+      
+      // Register with cleanup manager
+      if (window.EzGmailCleanup) {
+        window.EzGmailCleanup.registerObserver(this.observer, 'GmailNavigation - Main Observer');
+      }
+      
       console.log('Ez Gmail: DOM observer active on', target.className || target.tagName);
     } else {
       console.warn('Ez Gmail: Could not find Gmail container for observation');
     }
+  }
+
+  // Cleanup and destroy
+  destroy() {
+    console.log('Ez Gmail: Destroying GmailNavigation...');
+    
+    // Disconnect observers
+    if (this.observer) {
+      console.log('Ez Gmail: Disconnecting main observer');
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    
+    if (this.styleObserver) {
+      console.log('Ez Gmail: Disconnecting style observer');
+      this.styleObserver.disconnect();
+      this.styleObserver = null;
+    }
+    
+    // Clear timeouts
+    if (this.reinitTimeout) {
+      console.log('Ez Gmail: Clearing reinit timeout');
+      clearTimeout(this.reinitTimeout);
+      this.reinitTimeout = null;
+    }
+    
+    // Remove navigation bar from DOM
+    const navBar = document.getElementById('ez-gmail-navigation');
+    if (navBar && navBar.parentNode) {
+      console.log('Ez Gmail: Removing navigation bar from DOM');
+      navBar.parentNode.removeChild(navBar);
+    }
+    
+    // Clear references
+    this.navigationBar = null;
+    this.currentPage = null;
+    this.totalPages = null;
+    
+    console.log('Ez Gmail: GmailNavigation destroyed');
   }
 }
 

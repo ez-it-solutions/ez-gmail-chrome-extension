@@ -95,4 +95,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
+  
+  if (request.action === "openTemplates") {
+    // Open templates management page
+    chrome.tabs.create({ url: chrome.runtime.getURL("pages/templates.html") });
+    sendResponse({ success: true });
+    return true;
+  }
 });
